@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MenuLens — Accessible AI Menu Reader</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#F2F2F7; --surface:rgba(255,255,255,0.78); --surface-2:rgba(255,255,255,0.55);
+  --surface-3:rgba(255,255,255,0.35); --solid:#FFFFFF;
+  --border:rgba(0,0,0,0.08); --border-2:rgba(0,0,0,0.05);
+  --text:#1C1C1E; --text-2:#636366; --text-3:#AEAEB2;
+  --blue:#007AFF; --blue-s:rgba(0,122,255,0.12);
+  --green:#34C759; --green-s:rgba(52,199,89,0.12);
+  --orange:#FF9500; --orange-s:rgba(255,149,0,0.12);
+  --teal:#5AC8FA; --teal-s:rgba(90,200,250,0.14);
+  --purple:#AF52DE; --purple-s:rgba(175,82,222,0.12);
+  --red:#FF3B30; --red-s:rgba(255,59,48,0.10);
+  --blur:blur(20px) saturate(180%);
+  --r-sm:10px; --r-md:14px; --r-lg:20px; --r-xl:28px;
+  --sh-sm:0 1px 4px rgba(0,0,0,0.06),0 1px 2px rgba(0,0,0,0.04);
+  --sh-md:0 4px 20px rgba(0,0,0,0.08),0 1px 6px rgba(0,0,0,0.04);
+  --sh-lg:0 8px 36px rgba(0,0,0,0.10),0 2px 10px rgba(0,0,0,0.06);
+  --spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ease:cubic-bezier(0.4,0,0.2,1);
+}
+@media(prefers-color-scheme:dark){:root{
+  --bg:#000; --surface:rgba(28,28,30,0.82); --surface-2:rgba(44,44,46,0.72);
+  --surface-3:rgba(58,58,60,0.62); --solid:#1C1C1E;
+  --border:rgba(255,255,255,0.10); --border-2:rgba(255,255,255,0.06);
+  --text:#FFFFFF; --text-2:#AEAEB2; --text-3:#636366;
+  --blue-s:rgba(0,122,255,0.18); --green-s:rgba(52,199,89,0.18);
+  --orange-s:rgba(255,149,0,0.18); --teal-s:rgba(90,200,250,0.18);
+  --purple-s:rgba(175,82,222,0.18); --red-s:rgba(255,59,48,0.16);
+}}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.app{display:grid;grid-template-columns:1fr;min-height:100vh;}
+@media(min-width:900px){.app{grid-template-columns:360px 1fr;}}
+@media(min-width:1280px){.app{grid-template-columns:360px 1fr 340px;}}
+.glass{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:0.5px solid var(--border);border-radius:var(--r-lg);box-shadow:var(--sh-md);}
+.glass-sm{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:0.5px solid var(--border);border-radius:var(--r-md);box-shadow:var(--sh-sm);}
+
+/* HEADER */
+.app-header{position:sticky;top:0;z-index:200;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-bottom:0.5px solid var(--border);padding:0 1.5rem;display:flex;align-items:center;justify-content:space-between;height:60px;grid-column:1/-1;}
+.logo{display:flex;align-items:center;gap:10px;font-size:1.15rem;font-weight:800;color:var(--text);text-decoration:none;letter-spacing:-0.3px;}
+.logo-mark{width:32px;height:32px;border-radius:9px;background:linear-gradient(135deg,var(--blue),var(--purple));display:flex;align-items:center;justify-content:center;font-size:0.95rem;box-shadow:0 2px 10px rgba(0,122,255,0.3);}
+.logo-text span{color:var(--blue);}
+.tab-pills{display:flex;gap:4px;background:var(--surface-2);border:0.5px solid var(--border);border-radius:22px;padding:4px;}
+.tab-pill{padding:6px 18px;border-radius:18px;border:none;font-family:inherit;font-size:0.78rem;font-weight:500;cursor:pointer;transition:all 0.2s var(--ease);color:var(--text-2);background:transparent;}
+.tab-pill.active{background:var(--solid);color:var(--text);box-shadow:var(--sh-sm);font-weight:600;}
+.live-badge{display:inline-flex;align-items:center;gap:5px;background:var(--green-s);color:var(--green);border:0.5px solid rgba(52,199,89,0.25);border-radius:20px;padding:5px 12px;font-size:0.7rem;font-weight:600;}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* COLUMNS */
+.col-left{padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;overflow-y:auto;height:calc(100vh - 60px);position:sticky;top:60px;}
+.col-left::-webkit-scrollbar{display:none;}
+.col-main{padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;overflow-y:auto;border-left:0.5px solid var(--border);}
+.col-right{padding:1.5rem;display:flex;flex-direction:column;gap:1.25rem;overflow-y:auto;height:calc(100vh - 60px);position:sticky;top:60px;border-left:0.5px solid var(--border);}
+.col-right::-webkit-scrollbar{display:none;}
+
+/* MOBILE */
+@media(max-width:899px){
+  .app{display:block;}
+  .col-left,.col-main,.col-right{display:none;position:static;height:auto;border:none;padding-bottom:90px;}
+  .col-left.mob-active,.col-main.mob-active,.col-right.mob-active{display:flex;}
+  .app-header{position:fixed;top:0;left:0;right:0;}
+  body{padding-top:60px;}
+}
+
+/* BOTTOM TAB BAR */
+.btm-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:300;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border-top:0.5px solid var(--border);padding:8px 0 20px;justify-content:space-around;align-items:center;}
+@media(max-width:899px){.btm-bar{display:flex;}}
+.btm-item{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;padding:4px 20px;border:none;background:none;font-family:inherit;}
+.btm-icon{width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:16px;transition:transform 0.18s var(--spring);}
+.btm-item.active .btm-icon{transform:scale(1.12);}
+.btm-item:active .btm-icon{transform:scale(0.86);}
+.btm-label{font-size:10px;font-weight:500;color:var(--text-3);}
+.btm-item.active .btm-label{color:var(--blue);font-weight:700;}
+
+/* EYEBROW */
+.eyebrow{font-family:'DM Mono',monospace;font-size:0.62rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;color:var(--text-3);margin-bottom:0.6rem;}
+
+/* HERO CARD */
+.hero-card{background:linear-gradient(135deg,#007AFF 0%,#5856D6 100%);border-radius:var(--r-xl);padding:1.5rem;color:white;position:relative;overflow:hidden;box-shadow:0 12px 40px rgba(0,122,255,0.32);cursor:pointer;transition:transform 0.18s var(--spring),box-shadow 0.18s var(--ease);}
+.hero-card:hover{transform:translateY(-2px);box-shadow:0 16px 48px rgba(0,122,255,0.38);}
+.hero-card:active{transform:scale(0.975);}
+.hero-card::before{content:'';position:absolute;top:-50px;right:-50px;width:200px;height:200px;background:rgba(255,255,255,0.08);border-radius:50%;}
+.hero-card::after{content:'';position:absolute;bottom:-70px;left:10px;width:160px;height:160px;background:rgba(255,255,255,0.05);border-radius:50%;}
+.hero-eyebrow{font-size:0.65rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;opacity:0.7;margin-bottom:6px;}
+.hero-title{font-size:1.45rem;font-weight:800;letter-spacing:-0.4px;line-height:1.2;margin-bottom:4px;}
+.hero-sub{font-size:0.82rem;opacity:0.75;margin-bottom:1.1rem;}
+.hero-cta{display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,0.2);border:0.5px solid rgba(255,255,255,0.28);backdrop-filter:blur(10px);border-radius:20px;padding:8px 18px;font-size:0.78rem;font-weight:600;color:white;cursor:pointer;transition:background 0.15s;}
+.hero-cta:hover{background:rgba(255,255,255,0.3);}
+
+/* VENUE SWITCHER */
+.venue-switcher{display:flex;gap:8px;}
+.venue-btn{flex:1;padding:10px 8px;border-radius:var(--r-md);border:0.5px solid var(--border);background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);cursor:pointer;font-family:inherit;font-size:0.75rem;font-weight:500;color:var(--text-2);display:flex;flex-direction:column;align-items:center;gap:4px;transition:all 0.2s var(--spring);}
+.venue-btn:hover{border-color:rgba(0,122,255,0.3);color:var(--blue);}
+.venue-btn.active{background:var(--blue);border-color:var(--blue);color:white;box-shadow:0 4px 16px rgba(0,122,255,0.3);transform:translateY(-1px);}
+.venue-btn-emoji{font-size:1.2rem;}
+.venue-btn-label{font-size:0.65rem;}
+
+/* VENUE INTEL */
+.venue-intel{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md);}
+.venue-intel-hero{padding:1.1rem 1.25rem 0.9rem;display:flex;gap:0.75rem;align-items:flex-start;}
+.v-italian{background:linear-gradient(135deg,#2C1A00,#5C3310);}
+.v-pub{background:linear-gradient(135deg,#0F2A1E,#1E5C3A);}
+.v-french{background:linear-gradient(135deg,#1A0A2E,#3D1F72);}
+.venue-intel-icon{font-size:1.8rem;line-height:1;flex-shrink:0;margin-top:2px;}
+.venue-intel-name{font-size:1rem;font-weight:800;color:rgba(255,255,255,0.95);letter-spacing:-0.2px;line-height:1.2;}
+.venue-intel-type{font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:3px;font-weight:500;}
+.venue-intel-body{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:0.5px solid var(--border);border-top:none;padding:1rem 1.25rem;}
+.venue-summary{font-size:0.8rem;color:var(--text-2);line-height:1.65;margin-bottom:0.75rem;}
+.venue-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.venue-tag{font-size:0.65rem;font-weight:600;color:var(--blue);background:var(--blue-s);border-radius:20px;padding:3px 10px;border:0.5px solid rgba(0,122,255,0.15);}
+.venue-gf-alert{margin-top:0.75rem;padding:0.75rem 1rem;border-radius:var(--r-sm);font-size:0.76rem;line-height:1.55;font-weight:500;display:none;}
+.venue-gf-alert.unsafe{background:var(--red-s);color:var(--red);border:0.5px solid rgba(255,59,48,0.2);}
+.venue-gf-alert.caution{background:var(--orange-s);color:var(--orange);border:0.5px solid rgba(255,149,0,0.2);}
+.venue-thinking{display:none;align-items:center;gap:8px;padding:1rem 1.25rem;background:var(--surface-2);border:0.5px solid var(--border);border-radius:var(--r-lg);font-size:0.78rem;color:var(--text-2);font-style:italic;}
+
+/* MENU CHIPS */
+.menu-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.menu-chip{padding:6px 14px;border-radius:20px;font-size:0.73rem;font-weight:500;border:0.5px solid var(--border);background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);cursor:pointer;color:var(--text-2);transition:all 0.18s var(--spring);font-family:inherit;}
+.menu-chip:hover{border-color:rgba(255,149,0,0.4);color:var(--orange);}
+.menu-chip.active{background:var(--orange);border-color:var(--orange);color:white;box-shadow:0 2px 10px rgba(255,149,0,0.3);}
+
+/* SETTINGS PANEL */
+.settings-panel{padding:0.875rem 1rem;}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:0.5px solid var(--border-2);font-size:0.8rem;color:var(--text);}
+.setting-row:last-child{border-bottom:none;}
+.ios-toggle{width:46px;height:27px;border-radius:14px;background:rgba(120,120,128,0.16);position:relative;cursor:pointer;border:none;transition:background 0.24s var(--ease);flex-shrink:0;}
+.ios-toggle.on{background:var(--green);}
+.ios-toggle::after{content:'';position:absolute;top:2px;left:2px;width:23px;height:23px;border-radius:50%;background:white;box-shadow:0 1px 4px rgba(0,0,0,0.2);transition:transform 0.24s var(--ease);}
+.ios-toggle.on::after{transform:translateX(19px);}
+.font-ctrl{display:flex;align-items:center;gap:6px;}
+.font-btn{width:26px;height:26px;border-radius:7px;border:0.5px solid var(--border);background:var(--surface-2);font-size:1rem;font-weight:700;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.font-btn:hover{background:var(--blue);border-color:var(--blue);color:white;}
+.font-val{font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--text-3);min-width:22px;text-align:center;}
+
+/* MENU DISPLAY */
+.menu-display-header{padding:1.1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;}
+.restaurant-name{font-size:1rem;font-weight:800;color:white;letter-spacing:-0.2px;}
+.menu-cat-label{font-size:0.68rem;color:rgba(255,255,255,0.6);margin-top:2px;font-weight:500;}
+.menu-item-box{padding:1rem 1.25rem 1.25rem;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:0.5px solid var(--border);border-top:none;}
+.menu-item-name{font-size:1.05rem;font-weight:700;color:var(--text);letter-spacing:-0.2px;margin-bottom:3px;}
+.menu-item-price{font-family:'DM Mono',monospace;font-size:1rem;font-weight:500;color:var(--orange);}
+.menu-item-desc{font-size:0.82rem;color:var(--text-2);line-height:1.65;margin-top:8px;}
+.dyslexia .menu-item-name{font-size:1.12rem;letter-spacing:0.02em;}
+.dyslexia .menu-item-desc{font-size:0.92rem;line-height:1.95;letter-spacing:0.04em;word-spacing:0.15em;}
+
+/* GF BANNER */
+.gf-banner{border-radius:var(--r-md);padding:0.875rem 1rem;border:0.5px solid;}
+.gf-banner.safe{background:var(--green-s);border-color:rgba(52,199,89,0.25);}
+.gf-banner.unsafe{background:var(--red-s);border-color:rgba(255,59,48,0.22);}
+.gf-banner.caution{background:var(--orange-s);border-color:rgba(255,149,0,0.22);}
+.gf-banner-title{font-size:0.85rem;font-weight:700;margin-bottom:4px;}
+.gf-banner.safe .gf-banner-title{color:var(--green);}
+.gf-banner.unsafe .gf-banner-title{color:var(--red);}
+.gf-banner.caution .gf-banner-title{color:var(--orange);}
+.gf-banner-body{font-size:0.76rem;color:var(--text-2);line-height:1.55;}
+.gf-rec-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:8px;}
+.gf-rec-chip{padding:3px 10px;border-radius:20px;font-size:0.66rem;font-weight:600;background:var(--surface);border:0.5px solid var(--border);cursor:pointer;color:var(--text-2);transition:all 0.15s;font-family:inherit;}
+.gf-rec-chip:hover{background:var(--green);border-color:var(--green);color:white;}
+
+/* MOOD PICKER */
+.mood-picker{display:flex;gap:8px;}
+.mood-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 8px;border-radius:var(--r-md);border:0.5px solid var(--border);background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);cursor:pointer;font-family:inherit;transition:all 0.2s var(--spring);}
+.mood-btn:hover{border-color:rgba(255,149,0,0.35);transform:translateY(-2px);}
+.mood-btn:active{transform:scale(0.94);}
+.mood-btn.active{background:var(--orange);border-color:var(--orange);box-shadow:0 4px 16px rgba(255,149,0,0.3);transform:translateY(-2px);}
+.mood-emoji{font-size:1.5rem;line-height:1;}
+.mood-label{font-size:0.68rem;font-weight:600;color:var(--text-2);}
+.mood-btn.active .mood-label{color:white;}
+
+/* REC CARD */
+.rec-card{margin-top:0.75rem;border-radius:var(--r-md);overflow:hidden;border:0.5px solid var(--border);box-shadow:var(--sh-sm);animation:fadeUp 0.26s var(--spring);display:none;}
+.rec-card.visible{display:block;}
+.rec-card-head{padding:0.875rem 1rem;background:var(--surface-2);display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border);}
+.rec-head-left{display:flex;align-items:center;gap:10px;}
+.rec-icon{width:40px;height:40px;border-radius:10px;background:var(--surface);border:0.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:1.4rem;flex-shrink:0;}
+.rec-meta-label{font-size:0.62rem;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-3);margin-bottom:2px;}
+.rec-dish-name{font-size:0.88rem;font-weight:700;color:var(--text);}
+.rec-close{width:24px;height:24px;border-radius:50%;border:0.5px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:0.7rem;transition:all 0.15s;font-family:inherit;}
+.rec-close:hover{background:var(--red);border-color:var(--red);color:white;}
+.rec-body{padding:0.875rem 1rem;background:var(--surface);}
+.rec-desc{font-size:0.78rem;color:var(--text-2);line-height:1.65;margin-bottom:0.6rem;}
+.rec-tags{display:flex;flex-wrap:wrap;gap:5px;}
+.rec-tag{padding:3px 9px;border-radius:20px;font-size:0.66rem;font-weight:600;}
+.tag-free{background:var(--green-s);color:var(--green);}
+.tag-warn{background:var(--orange-s);color:var(--orange);}
+.tag-note{background:var(--surface-2);color:var(--text-3);}
+
+/* ACTION BUTTONS */
+.action-row{display:flex;gap:8px;flex-wrap:wrap;}
+.action-btn{flex:1;min-width:100px;padding:10px 12px;border-radius:var(--r-md);border:0.5px solid var(--border);background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);font-family:inherit;font-size:0.76rem;font-weight:600;color:var(--text-2);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:all 0.18s var(--spring);}
+.action-btn:hover{border-color:rgba(0,122,255,0.3);color:var(--blue);transform:translateY(-1px);}
+.action-btn:active{transform:scale(0.95);}
+.action-btn.primary{background:var(--blue);border-color:var(--blue);color:white;box-shadow:0 4px 16px rgba(0,122,255,0.28);}
+.action-btn.primary:hover{box-shadow:0 6px 20px rgba(0,122,255,0.38);}
+
+/* AI OUTPUT */
+.ai-output{border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md);}
+.ai-output-header{padding:0.875rem 1.1rem;background:var(--surface-2);border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px;}
+.ai-live-dot{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+.ai-title{font-size:0.8rem;font-weight:600;color:var(--text);flex:1;}
+.ai-model-tag{font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-3);background:var(--surface-2);border-radius:5px;padding:2px 7px;border:0.5px solid var(--border);}
+.ai-body{padding:1.1rem;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);min-height:120px;}
+.ai-placeholder{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.6rem;padding:1.5rem;text-align:center;color:var(--text-3);}
+.ai-placeholder-icon{font-size:1.8rem;opacity:0.5;}
+.ai-placeholder-text{font-size:0.76rem;line-height:1.6;max-width:260px;}
+.ai-thinking{display:none;align-items:center;gap:8px;padding:0.75rem;}
+.ai-thinking.visible{display:flex;}
+.thinking-dot{width:7px;height:7px;border-radius:50%;background:var(--blue);animation:thinkBounce 1.2s ease-in-out infinite;}
+.thinking-dot:nth-child(2){animation-delay:0.2s;}.thinking-dot:nth-child(3){animation-delay:0.4s;}
+@keyframes thinkBounce{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(-6px);opacity:1}}
+.thinking-text{font-size:0.76rem;color:var(--text-2);font-style:italic;}
+.ai-result{display:none;}
+.ai-result.visible{display:block;}
+.result-name{font-size:1.25rem;font-weight:800;color:var(--text);letter-spacing:-0.3px;margin-bottom:3px;}
+.result-price{font-family:'DM Mono',monospace;font-size:0.92rem;color:var(--orange);margin-bottom:0.875rem;}
+.result-desc{font-size:0.86rem;line-height:1.8;color:var(--text-2);letter-spacing:0.01em;}
+.result-allergens{display:flex;flex-wrap:wrap;gap:5px;margin-top:0.875rem;}
+.allergen-tag{padding:4px 10px;border-radius:20px;font-size:0.66rem;font-weight:600;}
+.allergen-tag.warn{background:var(--orange-s);color:var(--orange);border:0.5px solid rgba(255,149,0,0.25);}
+.allergen-tag.free{background:var(--green-s);color:var(--green);border:0.5px solid rgba(52,199,89,0.25);}
+.rword{border-radius:3px;transition:background 0.08s;}
+.rword.lit{background:rgba(255,149,0,0.28);}
+
+/* READ ALOUD */
+.read-aloud-bar{margin-top:0.875rem;padding-top:0.875rem;border-top:0.5px solid var(--border);display:flex;align-items:center;gap:10px;}
+.play-btn{width:36px;height:36px;border-radius:50%;background:var(--blue);border:none;color:white;font-size:0.85rem;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,122,255,0.28);transition:transform 0.18s var(--spring),box-shadow 0.15s;}
+.play-btn:hover{transform:scale(1.08);box-shadow:0 4px 14px rgba(0,122,255,0.38);}
+.play-btn:active{transform:scale(0.9);}
+.waveform{flex:1;height:24px;display:flex;align-items:center;gap:2px;}
+.wave-bar{flex:1;border-radius:2px;background:var(--border);transition:height 0.12s,background 0.12s;}
+.waveform.playing .wave-bar{background:var(--blue);animation:waveAnim 0.8s ease-in-out infinite alternate;}
+.wave-bar:nth-child(2n){animation-delay:0.1s;}.wave-bar:nth-child(3n){animation-delay:0.2s;}.wave-bar:nth-child(4n){animation-delay:0.3s;}
+@keyframes waveAnim{from{height:4px}to{height:18px}}
+.audio-meta{display:flex;flex-direction:column;gap:2px;min-width:80px;}
+.audio-label{font-size:0.68rem;color:var(--text-2);}
+.auto-play-row{display:flex;align-items:center;gap:4px;font-size:0.63rem;color:var(--text-3);cursor:pointer;}
+
+/* CX ANALYTICS PANEL */
+.analytics-title{font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-0.2px;}
+.kpi-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.kpi-card{background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:0.5px solid var(--border);border-radius:var(--r-md);padding:0.875rem 1rem;cursor:default;transition:all 0.18s var(--spring);}
+.kpi-card:hover{transform:translateY(-2px);box-shadow:var(--sh-md);}
+.kpi-label{font-size:0.62rem;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--text-3);margin-bottom:6px;}
+.kpi-value{font-size:1.45rem;font-weight:800;color:var(--text);letter-spacing:-0.3px;line-height:1;}
+.kpi-delta{font-size:0.66rem;font-weight:600;margin-top:4px;}
+.delta-up{color:var(--green);}
+.sentiment-row{display:flex;align-items:center;gap:1.1rem;background:var(--surface);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);border:0.5px solid var(--border);border-radius:var(--r-md);padding:1rem;}
+.ring-wrap{width:72px;height:72px;flex-shrink:0;position:relative;}
+.ring-wrap svg{transform:rotate(-90deg);width:72px;height:72px;}
+.ring-bg{fill:none;stroke:var(--border);stroke-width:7;}
+.ring-fill{fill:none;stroke:var(--green);stroke-width:7;stroke-linecap:round;stroke-dasharray:188;stroke-dashoffset:38;}
+.ring-label{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;}
+.ring-pct{font-size:0.95rem;font-weight:800;color:var(--text);line-height:1;}
+.ring-sub{font-size:0.5rem;color:var(--text-3);font-weight:600;margin-top:1px;}
+.sentiment-breakdown{display:flex;flex-direction:column;gap:4px;flex:1;}
+.sentiment-title{font-size:0.78rem;font-weight:700;color:var(--text);margin-bottom:5px;}
+.sent-row{display:flex;align-items:center;gap:6px;font-size:0.68rem;color:var(--text-2);}
+.sent-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+.friction-card{overflow:hidden;}
+.friction-header{padding:0.875rem 1rem;border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;}
+.friction-header-title{font-size:0.8rem;font-weight:700;color:var(--text);}
+.friction-header-sub{font-size:0.63rem;color:var(--text-3);}
+.friction-item{display:flex;align-items:center;gap:10px;padding:0.6rem 1rem;border-bottom:0.5px solid var(--border-2);transition:background 0.15s;}
+.friction-item:last-child{border-bottom:none;}
+.friction-item:hover{background:var(--surface-2);}
+.friction-name{font-size:0.73rem;color:var(--text-2);flex:1;}
+.friction-track{width:72px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.friction-fill{height:100%;border-radius:3px;}
+.fill-high{background:var(--red);}
+.fill-mid{background:var(--orange);}
+.fill-low{background:var(--green);}
+.friction-pct{font-family:'DM Mono',monospace;font-size:0.66rem;color:var(--text-3);width:28px;text-align:right;}
+.insight-card{background:linear-gradient(135deg,#34C759,#30B350);border-radius:var(--r-md);padding:1rem 1.1rem;color:white;}
+.insight-eyebrow{font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;opacity:0.7;margin-bottom:4px;}
+.insight-text{font-size:0.8rem;line-height:1.6;}
+.insight-text strong{font-weight:700;}
+.journey-row{display:flex;padding:1rem;gap:0;align-items:flex-start;}
+.journey-step{flex:1;text-align:center;position:relative;}
+.journey-step::after{content:'';position:absolute;top:13px;left:50%;width:100%;height:1.5px;background:var(--border);z-index:0;}
+.journey-step:last-child::after{display:none;}
+.journey-dot-wrap{position:relative;z-index:1;display:flex;justify-content:center;margin-bottom:5px;}
+.journey-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;border:1.5px solid var(--border);background:var(--surface);}
+.journey-dot.done{background:var(--green);border-color:var(--green);color:white;}
+.journey-label{font-size:0.58rem;color:var(--text-3);line-height:1.3;font-weight:500;}
+
+/* WORKFLOW */
+.wf-steps{display:flex;flex-direction:column;gap:0;}
+.wf-step{display:flex;gap:1rem;align-items:flex-start;position:relative;padding-bottom:1.25rem;}
+.wf-step:last-child{padding-bottom:0;}
+.wf-step::before{content:'';position:absolute;left:19px;top:40px;width:1.5px;height:calc(100% - 12px);background:var(--border);}
+.wf-step:last-child::before{display:none;}
+.wf-icon-box{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:1rem;z-index:1;border:0.5px solid var(--border);}
+.wf-capture{background:var(--orange-s);border-color:rgba(255,149,0,0.25);}
+.wf-ai{background:var(--teal-s);border-color:rgba(90,200,250,0.25);}
+.wf-render{background:var(--red-s);border-color:rgba(255,59,48,0.2);}
+.wf-voice{background:var(--purple-s);border-color:rgba(175,82,222,0.2);}
+.wf-analytics{background:var(--blue-s);border-color:rgba(0,122,255,0.2);}
+.wf-name{font-size:0.83rem;font-weight:700;color:var(--text);margin-bottom:3px;}
+.wf-desc{font-size:0.74rem;color:var(--text-2);line-height:1.55;}
+.wf-tech{display:inline-flex;align-items:center;gap:4px;margin-top:5px;font-family:'DM Mono',monospace;font-size:0.6rem;color:var(--text-3);background:var(--surface-2);border-radius:4px;padding:2px 8px;}
+
+/* ANALYTICS TAB */
+.friction-word-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.fw-chip{padding:4px 10px;border-radius:20px;font-size:0.7rem;font-weight:600;}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px) scale(0.98)}to{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+
+<header class="app-header">
+  <a class="logo" href="#">
+    <div class="logo-mark">🔍</div>
+    <div class="logo-text">Menu<span>Lens</span></div>
+  </a>
+  <div class="tab-pills">
+    <button class="tab-pill active" onclick="switchMainTab('demo',this)">Live Demo</button>
+    <button class="tab-pill" onclick="switchMainTab('workflow',this)">AI Workflow</button>
+    <button class="tab-pill" onclick="switchMainTab('analytics',this)">CX Analytics</button>
+  </div>
+  <div class="live-badge"><div class="live-dot"></div>AI-Powered</div>
+</header>
+
+<div class="app">
+
+<!-- ══ LEFT COLUMN ══ -->
+<div class="col-left mob-active" id="colLeft">
+
+  <div id="tab-demo">
+    <div class="hero-card">
+      <div class="hero-eyebrow">AI Menu Accessibility</div>
+      <div class="hero-title">Read any menu with confidence</div>
+      <div class="hero-sub">Dyslexia-friendly · GF mode · Read aloud · 3 venues</div>
+      <div class="hero-cta">Get started ›</div>
+    </div>
+
+    <div>
+      <div class="eyebrow">Switch Restaurant</div>
+      <div class="venue-switcher">
+        <button class="venue-btn active" onclick="switchVenue(0,this)"><span class="venue-btn-emoji">🍝</span><span class="venue-btn-label">Italian</span></button>
+        <button class="venue-btn" onclick="switchVenue(1,this)"><span class="venue-btn-emoji">🍺</span><span class="venue-btn-label">Pub</span></button>
+        <button class="venue-btn" onclick="switchVenue(2,this)"><span class="venue-btn-emoji">🥂</span><span class="venue-btn-label">French</span></button>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow">Venue Intelligence <span style="font-size:0.55rem;background:var(--teal-s);color:var(--teal);padding:2px 6px;border-radius:4px;font-weight:700;letter-spacing:0.05em;vertical-align:middle">AI</span></div>
+      <div id="venueThinking" class="venue-thinking"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span style="font-size:0.76rem;color:var(--text-2);font-style:italic">Analysing restaurant…</span></div>
+      <div class="venue-intel" id="venueIntelCard">
+        <div class="venue-intel-hero v-italian" id="venueHeroBg">
+          <div class="venue-intel-icon" id="venueIcon">🍝</div>
+          <div><div class="venue-intel-name" id="venueName">La Trattoria Bella</div><div class="venue-intel-type" id="venueType">🇮🇹 Italian · Fine Dining · Seasonal Menu</div></div>
+        </div>
+        <div class="venue-intel-body">
+          <div class="venue-summary" id="venueSummary">This is an Italian restaurant — <strong>expect pasta to be the star of the show.</strong> Most dishes are built around wheat-based noodles, risotto, or bread. Starters lean on cured meats, cheeses, and bruschetta.</div>
+          <div class="venue-tags" id="venueTags"><span class="venue-tag">🍝 Pasta-heavy</span><span class="venue-tag">🧀 Lots of dairy</span><span class="venue-tag">🥩 Meat mains</span><span class="venue-tag">🍷 Wine pairings</span></div>
+          <div class="venue-gf-alert" id="venueGfAlert"></div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow">Choose a Menu Item</div>
+      <div class="menu-chips" id="menuChips">
+        <button class="menu-chip active" onclick="selectItem(0,this)">🍝 Pappardelle al Cinghiale</button>
+        <button class="menu-chip" onclick="selectItem(1,this)">🥗 Salade Niçoise</button>
+        <button class="menu-chip" onclick="selectItem(2,this)">🍖 Boeuf Bourguignon</button>
+        <button class="menu-chip" onclick="selectItem(3,this)">🍮 Crème Brûlée</button>
+      </div>
+    </div>
+
+    <div>
+      <div class="eyebrow">Display Settings</div>
+      <div class="glass-sm">
+        <div class="settings-panel">
+          <div class="setting-row"><span>Dyslexia-Friendly Font</span><button class="ios-toggle on" id="dyslexiaToggle" onclick="toggleDyslexia(this)"></button></div>
+          <div class="setting-row"><span>🌾 Gluten-Free Mode</span><button class="ios-toggle" id="gfToggle" onclick="toggleGlutenFree(this)"></button></div>
+          <div class="setting-row"><span>High Contrast</span><button class="ios-toggle" onclick="this.classList.toggle('on');document.body.style.filter=this.classList.contains('on')?'contrast(1.15)':''"></button></div>
+          <div class="setting-row"><span>Word Highlighting</span><button class="ios-toggle" id="highlightToggle" onclick="this.classList.toggle('on');toggleHighlight(this)"></button></div>
+          <div class="setting-row"><span>Font Size</span><div class="font-ctrl"><button class="font-btn" onclick="changeFontSize(-1)">−</button><div class="font-val" id="fontSizeDisplay">M</div><button class="font-btn" onclick="changeFontSize(1)">+</button></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="tab-workflow" style="display:none">
+    <div class="glass" style="padding:1.25rem">
+      <div style="font-size:1rem;font-weight:800;color:var(--text);letter-spacing:-0.2px;margin-bottom:4px">MenuLens AI Workflow</div>
+      <div style="font-size:0.76rem;color:var(--text-2);line-height:1.6;margin-bottom:1.25rem">A real-time accessibility pipeline powered by Claude Sonnet 4 — sitting between confusing menus and the 1 in 5 people with dyslexia.</div>
+      <div class="wf-steps">
+        <div class="wf-step"><div class="wf-icon-box wf-capture">📷</div><div><div class="wf-name">1 · Menu Capture</div><div class="wf-desc">Guest scans physical menu via camera, or restaurant pushes digital menu via SDK. Text extracted via OCR or passed directly.</div><div class="wf-tech">📱 Camera API · Tesseract OCR</div></div></div>
+        <div class="wf-step"><div class="wf-icon-box wf-ai">🤖</div><div><div class="wf-name">2 · Claude Simplification</div><div class="wf-desc">Each item sent to Claude Sonnet 4 with a prompt tuned for dyslexia-friendly output: short sentences, plain words, no culinary jargon. Allergens parsed simultaneously.</div><div class="wf-tech">⚡ Anthropic API · claude-sonnet-4</div></div></div>
+        <div class="wf-step"><div class="wf-icon-box wf-render">🖼️</div><div><div class="wf-name">3 · Accessible Rendering</div><div class="wf-desc">Output rendered using Inter typeface, wider spacing, WCAG AA+ contrast, adjustable font scale, and color-coded allergen tags.</div><div class="wf-tech">🎨 Inter · WCAG 2.1 AA</div></div></div>
+        <div class="wf-step"><div class="wf-icon-box wf-voice">🔊</div><div><div class="wf-name">4 · Text-to-Speech</div><div class="wf-desc">Simplified text read aloud with word-by-word highlighting. Guests can listen without reading at all.</div><div class="wf-tech">🗣️ Web Speech API · ElevenLabs</div></div></div>
+        <div class="wf-step"><div class="wf-icon-box wf-analytics">📊</div><div><div class="wf-name">5 · CX Analytics Loop</div><div class="wf-desc">Every interaction logged anonymously. Dashboard surfaces friction points, satisfaction trends, and accessibility ROI for restaurant operators.</div><div class="wf-tech">📈 Event stream · Segment · Dashboard</div></div></div>
+      </div>
+    </div>
+    <div class="glass" style="padding:1.25rem"><div style="font-size:0.95rem;font-weight:800;color:var(--text);margin-bottom:8px">The CX Problem</div><div style="font-size:0.8rem;color:var(--text-2);line-height:1.7">Dyslexia affects ~15–20% of the population. A complex menu creates: <strong style="color:var(--text)">cognitive overload → anxiety → ordering the "safe" familiar dish → lower spend → lower satisfaction.</strong> MenuLens breaks that loop.</div></div>
+  </div>
+
+  <div id="tab-analytics-left" style="display:none">
+    <div class="glass" style="padding:1.25rem">
+      <div style="font-size:0.95rem;font-weight:800;color:var(--text);margin-bottom:4px">CX Insights</div>
+      <div style="font-size:0.76rem;color:var(--text-2);margin-bottom:1rem">Anonymized data from 247 diners across 12 restaurant partners.</div>
+      <div class="eyebrow">Top Friction Words</div>
+      <div class="friction-word-chips">
+        <span class="fw-chip" style="background:var(--red-s);color:var(--red)">Confit ×82</span>
+        <span class="fw-chip" style="background:var(--red-s);color:var(--red)">Bisque ×71</span>
+        <span class="fw-chip" style="background:var(--orange-s);color:var(--orange)">Lyonnaise ×65</span>
+        <span class="fw-chip" style="background:var(--orange-s);color:var(--orange)">Millefeuille ×58</span>
+        <span class="fw-chip" style="background:var(--teal-s);color:var(--teal)">Soffritto ×43</span>
+        <span class="fw-chip" style="background:var(--teal-s);color:var(--teal)">Velouté ×39</span>
+      </div>
+      <div style="margin-top:1rem;font-size:0.76rem;color:var(--text-2);line-height:1.7;background:var(--surface-2);border-radius:var(--r-sm);padding:0.875rem">🎯 <strong style="color:var(--text)">Insight:</strong> Guests who encounter 3+ unfamiliar culinary terms on a single item are <strong style="color:var(--text)">2.4× more likely to order their previous order</strong> rather than explore.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ MAIN COLUMN ══ -->
+<div class="col-main mob-active" id="colMain">
+
+  <div>
+    <div class="eyebrow">Original Menu Text</div>
+    <div style="border-radius:var(--r-lg);overflow:hidden;box-shadow:var(--sh-md)">
+      <div id="menuHeader" class="v-italian menu-display-header">
+        <div><div class="restaurant-name" id="restaurantName">La Trattoria Bella</div><div class="menu-cat-label" id="menuCatLabel">Primi Piatti · Winter Menu 2025</div></div>
+        <div style="font-size:1.6rem">🍽️</div>
+      </div>
+      <div class="menu-item-box dyslexia" id="menuItemBox">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:6px">
+          <div class="menu-item-name" id="itemName">Pappardelle al Cinghiale</div>
+          <div class="menu-item-price" id="itemPrice">$28</div>
+        </div>
+        <div class="menu-item-desc" id="itemDesc">Hand-rolled egg pappardelle with slow-braised wild boar ragù, soffritto di verdure, San Marzano tomatoes, Chianti Classico reduction, fresh rosemary & thyme, finished with aged Parmigiano-Reggiano DOP and a drizzle of Sicilian cold-pressed extra-virgin olive oil.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="gfBanner" style="display:none"><div class="gf-banner" id="gfBannerInner"></div></div>
+
+  <div>
+    <div class="eyebrow">What are you in the mood for?</div>
+    <div class="glass-sm" style="padding:1rem">
+      <div style="font-size:0.78rem;color:var(--text-2);margin-bottom:0.875rem">Tap a preference for an AI recommendation at this venue</div>
+      <div class="mood-picker">
+        <button class="mood-btn" onclick="selectMood('chicken',this)"><span class="mood-emoji">🍗</span><span class="mood-label">Chicken</span></button>
+        <button class="mood-btn" onclick="selectMood('seafood',this)"><span class="mood-emoji">🐟</span><span class="mood-label">Seafood</span></button>
+        <button class="mood-btn" onclick="selectMood('sandwich',this)"><span class="mood-emoji">🥪</span><span class="mood-label">Sandwich</span></button>
+      </div>
+      <div class="rec-card" id="recCard">
+        <div class="rec-card-head">
+          <div class="rec-head-left">
+            <div class="rec-icon" id="recEmoji">🍗</div>
+            <div><div class="rec-meta-label" id="recLabel">Our pick for you</div><div class="rec-dish-name" id="recDish"></div></div>
+          </div>
+          <button class="rec-close" onclick="clearMood()">✕</button>
+        </div>
+        <div class="rec-body">
+          <div id="recThinking" class="ai-thinking" style="display:none"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><span class="thinking-text" id="recThinkingText">Finding the best match…</span></div>
+          <div class="rec-desc" id="recDesc"></div>
+          <div class="rec-tags" id="recTags"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div class="eyebrow">AI Actions</div>
+    <div class="action-row">
+      <button class="action-btn primary" onclick="simplifyMenu()">✦ Simplify & Explain</button>
+      <button class="action-btn" onclick="checkAllergens()">⚠ Allergen Check</button>
+      <button class="action-btn" onclick="translateSimple()">🌍 Plain English</button>
+    </div>
+  </div>
+
+  <div>
+    <div class="eyebrow">AI Response</div>
+    <div class="ai-output">
+      <div class="ai-output-header">
+        <div class="ai-live-dot"></div>
+        <div class="ai-title" id="aiOutputTitle">Awaiting request…</div>
+        <div class="ai-model-tag">claude-sonnet-4</div>
+      </div>
+      <div class="ai-body">
+        <div class="ai-thinking" id="aiThinking"><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-dot"></div><div class="thinking-text" id="thinkingText">Processing…</div></div>
+        <div id="aiPlaceholder" class="ai-placeholder"><div class="ai-placeholder-icon">✦</div><div class="ai-placeholder-text">Select an action above to see AI simplify, explain allergens, or rewrite the menu item in plain English — optimized for dyslexic readers.</div></div>
+        <div class="ai-result" id="aiResult">
+          <div class="result-name" id="resultName"></div>
+          <div class="result-price" id="resultPrice"></div>
+          <div class="result-desc" id="resultDesc"></div>
+          <div class="result-allergens" id="allergenRow"></div>
+          <div class="read-aloud-bar" id="readAloudBar">
+            <button class="play-btn" id="playBtn" onclick="toggleAudio()">▶</button>
+            <div class="waveform" id="waveform">
+              <div class="wave-bar" style="height:4px"></div><div class="wave-bar" style="height:10px"></div><div class="wave-bar" style="height:7px"></div><div class="wave-bar" style="height:14px"></div><div class="wave-bar" style="height:6px"></div><div class="wave-bar" style="height:12px"></div><div class="wave-bar" style="height:8px"></div><div class="wave-bar" style="height:16px"></div><div class="wave-bar" style="height:5px"></div><div class="wave-bar" style="height:11px"></div><div class="wave-bar" style="height:9px"></div><div class="wave-bar" style="height:13px"></div>
+            </div>
+            <div class="audio-meta">
+              <div class="audio-label" id="audioLabel">Read aloud</div>
+              <label class="auto-play-row"><input type="checkbox" id="autoPlayCheck" style="width:10px;height:10px;accent-color:var(--blue)"> Auto-play</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══ RIGHT COLUMN — CX ANALYTICS ══ -->
+<div class="col-right" id="colRight">
+  <div class="analytics-title">CX Analytics</div>
+  <div style="font-size:0.73rem;color:var(--text-3);margin-top:-0.875rem">Live accessibility impact · 30-day rolling</div>
+  <div class="kpi-grid">
+    <div class="kpi-card"><div class="kpi-label">Simplifications</div><div class="kpi-value" id="kpi1">…</div><div class="kpi-delta delta-up">↑ 23% vs last month</div></div>
+    <div class="kpi-card"><div class="kpi-label">Read Time ↓</div><div class="kpi-value" id="kpi2">…</div><div class="kpi-delta delta-up">Faster ordering</div></div>
+    <div class="kpi-card"><div class="kpi-label">Satisfaction</div><div class="kpi-value" id="kpi3">…</div><div class="kpi-delta delta-up">↑ 0.8 pts lift</div></div>
+    <div class="kpi-card"><div class="kpi-label">Abandonment</div><div class="kpi-value" id="kpi4">…</div><div class="kpi-delta delta-up">↓ Dropped</div></div>
+  </div>
+  <div class="sentiment-row">
+    <div class="ring-wrap"><svg viewBox="0 0 72 72"><circle class="ring-bg" cx="36" cy="36" r="28"/><circle class="ring-fill" cx="36" cy="36" r="28"/></svg><div class="ring-label"><div class="ring-pct">80%</div><div class="ring-sub">positive</div></div></div>
+    <div><div class="sentiment-title">Post-Meal Sentiment</div><div class="sentiment-breakdown"><div class="sent-row"><div class="sent-dot" style="background:var(--green)"></div>Positive · 80%</div><div class="sent-row"><div class="sent-dot" style="background:var(--orange)"></div>Neutral · 13%</div><div class="sent-row"><div class="sent-dot" style="background:var(--red)"></div>Negative · 7%</div></div></div>
+  </div>
+  <div class="glass-sm friction-card">
+    <div class="friction-header"><div class="friction-header-title">Menu Friction Points</div><div class="friction-header-sub">% who simplify</div></div>
+    <div class="friction-item"><div class="friction-name">Culinary terminology</div><div class="friction-track"><div class="friction-fill fill-high" style="width:78%"></div></div><div class="friction-pct">78%</div></div>
+    <div class="friction-item"><div class="friction-name">Foreign language words</div><div class="friction-track"><div class="friction-fill fill-high" style="width:71%"></div></div><div class="friction-pct">71%</div></div>
+    <div class="friction-item"><div class="friction-name">Long descriptions</div><div class="friction-track"><div class="friction-fill fill-mid" style="width:64%"></div></div><div class="friction-pct">64%</div></div>
+    <div class="friction-item"><div class="friction-name">Small print / serif fonts</div><div class="friction-track"><div class="friction-fill fill-mid" style="width:52%"></div></div><div class="friction-pct">52%</div></div>
+    <div class="friction-item"><div class="friction-name">Allergen info buried</div><div class="friction-track"><div class="friction-fill fill-low" style="width:44%"></div></div><div class="friction-pct">44%</div></div>
+    <div class="friction-item"><div class="friction-name">Price placement</div><div class="friction-track"><div class="friction-fill fill-low" style="width:31%"></div></div><div class="friction-pct">31%</div></div>
+  </div>
+  <div class="insight-card"><div class="insight-eyebrow">💡 CX Insight of the Day</div><div class="insight-text">Guests using dyslexia mode spend <strong>+$12.40 more per visit</strong> — they explore the full menu instead of defaulting to familiar orders. Accessibility isn't just ethical. <strong>It's good business.</strong></div></div>
+  <div class="glass-sm" style="overflow:hidden">
+    <div style="padding:0.875rem 1rem;border-bottom:0.5px solid var(--border);font-size:0.78rem;font-weight:700;color:var(--text)">Dyslexic Diner Journey · With MenuLens</div>
+    <div class="journey-row">
+      <div class="journey-step"><div class="journey-dot-wrap"><div class="journey-dot done">😊</div></div><div class="journey-label">Seated</div></div>
+      <div class="journey-step"><div class="journey-dot-wrap"><div class="journey-dot done">✦</div></div><div class="journey-label">Plain English</div></div>
+      <div class="journey-step"><div class="journey-dot-wrap"><div class="journey-dot done">😄</div></div><div class="journey-label">Explores menu</div></div>
+      <div class="journey-step"><div class="journey-dot-wrap"><div class="journey-dot done">😍</div></div><div class="journey-label">Orders boldly</div></div>
+      <div class="journey-step"><div class="journey-dot-wrap"><div class="journey-dot done">⭐</div></div><div class="journey-label">High NPS</div></div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /app -->
+
+<nav class="btm-bar">
+  <button class="btm-item active" id="mTabHome" onclick="switchMobile('home')"><div class="btm-icon">🏠</div><div class="btm-label">Home</div></button>
+  <button class="btm-item" id="mTabMenu" onclick="switchMobile('menu')"><div class="btm-icon">✦</div><div class="btm-label">Menu</div></button>
+  <button class="btm-item" id="mTabStats" onclick="switchMobile('stats')"><div class="btm-icon">📊</div><div class="btm-label">Analytics</div></button>
+</nav>
+
+<script>
+// DATA
+const venues=[{id:'italian',name:'La Trattoria Bella',emoji:'🍝',type:'🇮🇹 Italian · Fine Dining · Seasonal Menu',theme:'v-italian',summary:'This is an Italian restaurant — <strong>expect pasta to be the star of the show.</strong> Most dishes are built around wheat-based noodles, risotto, or bread. Starters lean on cured meats, cheeses, and bruschetta.',tags:['🍝 Pasta-heavy','🧀 Lots of dairy','🥩 Meat mains','🍷 Wine pairings','🌿 Seasonal ingredients'],gfWarning:'🌾 Heads up — gluten is everywhere here. Nearly every main dish contains pasta or bread. Your best bets are salads, risotto (ask if pure rice-based), or any protein dish without pasta. Always confirm with your server.',items:[{name:'Pappardelle al Cinghiale',price:'$28',emoji:'🍝',desc:'Hand-rolled egg pappardelle with slow-braised wild boar ragù, soffritto di verdure, San Marzano tomatoes, Chianti Classico reduction, fresh rosemary & thyme, finished with aged Parmigiano-Reggiano DOP and a drizzle of Sicilian cold-pressed extra-virgin olive oil.',category:'Primi Piatti · Winter Menu 2025'},{name:'Salade Niçoise Traditionnelle',price:'$22',emoji:'🥗',desc:'Mesclun salad with oil-packed Albacore tuna, haricots verts blanchis, Niçoise olives, cornichons, hard-boiled eggs, heirloom tomatoes, and anchovy fillets, dressed with a Dijon and red wine vinaigrette.',category:'Entrées Froides · Summer Specials'},{name:'Boeuf Bourguignon Façon Grand-Mère',price:'$36',emoji:'🍖',desc:'Slow-braised Charolais beef chuck in Burgundy Pinot Noir with lardons, pearl onions, cremini and porcini mushrooms, bouquet garni, and a rich demi-glace reduction, served with pomme purée Robuchon style and fresh chervil.',category:'Plats Principaux · Hiver'},{name:'Crème Brûlée à la Fleur d\'Oranger',price:'$14',emoji:'🍮',desc:'Classic Provençal crème brûlée infused with Moroccan orange blossom water, Madagascar Bourbon vanilla, and a caramelized Demerara sugar crust, served with a tuile dentelle and fresh raspberries.',category:'Desserts · À la Carte'}],gfStatus:[{status:'unsafe',icon:'🚫',title:'Not Gluten-Free',msg:'This dish contains gluten — the pasta is made with wheat flour.',recs:[1,2,3]},{status:'safe',icon:'✅',title:'Gluten-Free',msg:'Great news! This salad is naturally gluten-free.',recs:[2,3]},{status:'safe',icon:'✅',title:'Gluten-Free',msg:'This beef stew is gluten-free. The mashed potato contains no wheat.',recs:[1,3]},{status:'caution',icon:'⚠️',title:'Contains Gluten (wafer biscuit)',msg:'The crème brûlée itself is GF, but the tuile wafer is not. Ask your server to leave it off.',recs:[1,2]}]},{id:'pub',name:'The Anchor & Crown',emoji:'🍺',type:'🇺🇸 American Pub · Casual Dining · Full Bar',theme:'v-pub',summary:'This is a classic American pub with a big, varied menu — <strong>there\'s something for everyone here.</strong> Expect burgers, wings, nachos, salads, sandwiches, and hearty mains. Casual, generous portions, easy to navigate.',tags:['🍔 Burgers & sandwiches','🍗 Wings & sharers','🥗 Salad options','🍟 Fries with everything','🌮 Tex-Mex bites'],gfWarning:'⚠️ Many pub classics contain gluten — buns, batter, and breaded coatings are common. Good news: this menu has clearly marked GF options. Salads (without croutons), grilled proteins, and loaded potato skins are safe bets.',items:[{name:'The Crown Classic Smash Burger',price:'$16',emoji:'🍔',desc:'Two smashed beef patties on a toasted brioche bun with American cheese, iceberg lettuce, beef tomato, dill pickles, Thousand Island sauce, and a side of seasoned shoestring fries.',category:'Burgers · Customer Favourites'},{name:'Buffalo Crispy Chicken Wings',price:'$14',emoji:'🍗',desc:'A dozen golden-fried chicken wings tossed in Frank\'s RedHot buffalo sauce, served with celery sticks, carrot batons, and a chunky blue cheese dip or ranch on the side.',category:'Starters & Sharers'},{name:'Southwest Grilled Chicken Salad',price:'$15',emoji:'🥗',desc:'Romaine lettuce, grilled chipotle chicken breast, roasted corn, black beans, pickled jalapeños, cherry tomatoes, tortilla strips, shredded cheddar, and a cilantro-lime dressing.',category:'Salads · Lighter Plates'},{name:'Loaded Potato Skins',price:'$11',emoji:'🥔',desc:'Four crispy potato skin boats filled with melted cheddar and Monterey Jack cheese, topped with smoked bacon crumbles, sour cream, and fresh chives. Perfect for sharing.',category:'Starters & Sharers'}],gfStatus:[{status:'unsafe',icon:'🚫',title:'Contains Gluten (brioche bun)',msg:'The brioche bun contains gluten. Ask for a lettuce wrap or GF bun — most pubs can do this!',recs:[2,3]},{status:'unsafe',icon:'🚫',title:'Contains Gluten (battered coating)',msg:'The wing coating contains flour. Ask for naked/unbreaded wings tossed in sauce instead.',recs:[2,3]},{status:'caution',icon:'⚠️',title:'Mostly GF — skip the tortilla strips',msg:'This salad is nearly gluten-free. Just ask for no tortilla strips. Everything else is safe.',recs:[3]},{status:'safe',icon:'✅',title:'Gluten-Free!',msg:'Potato skins are naturally gluten-free. The cheese, bacon, and sour cream topping are all safe.',recs:[2]}]},{id:'french',name:'Bistrot Lumière',emoji:'🥂',type:'🇫🇷 French Bistro · Wine Bar · À la Carte',theme:'v-french',summary:'A classic French bistro — <strong>refined, ingredient-led cooking with French culinary terminology throughout.</strong> Expect duck confit, steak frites, classic sauces, and excellent cheese. The menu leans heavily on animal proteins and rich dairy.',tags:['🥩 Duck, beef & lamb','🧀 Cheese & charcuterie','🥐 Bread with everything','🍷 Wine-forward sauces','🐟 Seasonal fish dishes'],gfWarning:'🌾 French cooking is tricky for GF diners — sauces are often thickened with flour (roux), and bread arrives automatically. Ask your server to flag GF dishes and to hold the bread basket.',items:[{name:'Magret de Canard, Sauce Cerise',price:'$38',emoji:'🍖',desc:'Pan-seared duck breast from Gascony, cooked medium-rare, with a glossy Morello cherry and aged Banyuls vinegar reduction, roasted heritage carrots, pommes sarladaises, and a scattering of micro herbs.',category:'Plats du Jour · Mains'},{name:'Soupe à l\'Oignon Gratinée',price:'$16',emoji:'🧅',desc:'Classic French onion soup with slow-caramelised brown onions in a rich beef consommé, topped with a croûton of toasted country bread and a molten gratin of Gruyère and Comté cheese.',category:'Soupes & Entrées'},{name:'Salade de Chèvre Chaud',price:'$18',emoji:'🥗',desc:'Mixed frisée, radicchio, and lamb\'s lettuce with warm goat\'s cheese croustade on sourdough toast, candied walnuts, Medjool dates, sliced pear, and a honey-walnut vinaigrette.',category:'Entrées Froides'},{name:'Tarte Tatin aux Pommes',price:'$13',emoji:'🍎',desc:'Individual upside-down caramelised apple tart in buttery puff pastry, served warm with a quenelle of Normandy crème fraîche and a dusting of cinnamon sugar.',category:'Desserts · Classiques'}],gfStatus:[{status:'safe',icon:'✅',title:'Gluten-Free',msg:'Duck breast and the cherry sauce are naturally GF. Confirm the pommes sarladaises (potato) have no flour added.',recs:[2]},{status:'unsafe',icon:'🚫',title:'Contains Gluten (croûton + bread)',msg:'The bread croûton and Gruyère gratin topping both contain wheat. This dish is not GF as served.',recs:[0,2]},{status:'unsafe',icon:'🚫',title:'Contains Gluten (sourdough croustade)',msg:'The warm goat\'s cheese sits on sourdough toast. Ask if the kitchen can serve it on its own — the salad itself is GF.',recs:[0]},{status:'unsafe',icon:'🚫',title:'Contains Gluten (puff pastry)',msg:'The tart is made with puff pastry which contains wheat. Unfortunately no easy swap here — choose a sorbet instead.',recs:[0]}]}];
+
+const simplifications=[[{name:'Wide pasta with wild boar meat sauce',desc:'Big, flat noodles made fresh with eggs. Topped with rich, slow-cooked wild boar meat sauce. Made with tomatoes, red wine, and herbs. Finished with shaved parmesan and olive oil.',allergens:[{label:'Contains gluten',type:'warn'},{label:'Contains dairy',type:'warn'},{label:'Contains eggs',type:'warn'},{label:'Nut-free',type:'free'}]},{name:'Classic French tuna salad',desc:'A fresh salad with tuna, green beans, olives, small pickles, boiled eggs, tomatoes, and anchovies. Dressed with a simple mustard and vinegar dressing.',allergens:[{label:'Contains fish',type:'warn'},{label:'Contains eggs',type:'warn'},{label:'Gluten-free',type:'free'},{label:'Dairy-free',type:'free'}]},{name:'French beef stew',desc:'Tender beef slow-cooked in red wine with bacon pieces, small onions, and mushrooms. Rich, warming sauce. Served with smooth, creamy mashed potato.',allergens:[{label:'Contains dairy',type:'warn'},{label:'Gluten-free',type:'free'},{label:'Nut-free',type:'free'}]},{name:'Orange blossom crème brûlée',desc:'Creamy vanilla custard with a hint of orange blossom. Has a crispy burnt sugar top — crack it with your spoon! Served with a thin wafer biscuit and fresh raspberries.',allergens:[{label:'Contains dairy',type:'warn'},{label:'Contains eggs',type:'warn'},{label:'Contains gluten',type:'warn'}]}],[{name:'Double cheeseburger with fries',desc:'Two thin beef patties in a soft toasted bun. Has cheese, lettuce, tomato, pickles, and a tangy sauce. Comes with crispy skinny fries.',allergens:[{label:'Contains gluten',type:'warn'},{label:'Contains dairy',type:'warn'},{label:'Contains eggs',type:'warn'},{label:'Ask for GF bun',type:'warn'}]},{name:'Crispy chicken wings with hot sauce',desc:'A dozen fried chicken wings coated in spicy hot sauce. Comes with celery, carrots, and a creamy dipping sauce — choose blue cheese or ranch.',allergens:[{label:'Contains gluten',type:'warn'},{label:'Contains dairy',type:'warn'},{label:'Ask naked for GF',type:'warn'}]},{name:'Grilled chicken salad with lime dressing',desc:'A big salad with grilled spicy chicken on romaine lettuce. Has corn, beans, jalapeños, tomatoes, cheese, and a crunchy chip strip on top. Light citrus dressing.',allergens:[{label:'Contains dairy',type:'warn'},{label:'Contains gluten (strips)',type:'warn'},{label:'Skip strips for GF',type:'free'}]},{name:'Cheesy loaded potato skins',desc:'Crispy potato shell halves filled with melted cheese and topped with bacon bits and sour cream. Great for sharing. Naturally gluten-free.',allergens:[{label:'Contains dairy',type:'warn'},{label:'Gluten-free',type:'free'},{label:'Nut-free',type:'free'}]}],[{name:'Pan-seared duck breast with cherry sauce',desc:'Duck breast cooked slightly pink, with a rich, slightly sweet cherry sauce. Served with roasted carrots and crispy potatoes cooked in duck fat.',allergens:[{label:'Gluten-free',type:'free'},{label:'Dairy-free',type:'free'},{label:'No nuts',type:'free'}]},{name:'Cheesy onion soup with bread on top',desc:'A warm, deeply savoury soup made from sweet onions. Has a thick slice of toasted bread and a big layer of melted cheese on top.',allergens:[{label:'Contains gluten',type:'warn'},{label:'Contains dairy',type:'warn'},{label:'Not GF as served',type:'warn'}]},{name:'Warm goat\'s cheese salad',desc:'Mixed bitter salad leaves with a warm round of goat\'s cheese on toasted bread. Has candied walnuts, dates, pear slices, and a honey dressing.',allergens:[{label:'Contains gluten',type:'warn'},{label:'Contains dairy',type:'warn'},{label:'Contains nuts',type:'warn'}]},{name:'Warm upside-down apple tart',desc:'A small caramelised apple tart with buttery, flaky pastry, served warm. Comes with a dollop of thick French cream and a sprinkle of cinnamon.',allergens:[{label:'Contains gluten',type:'warn'},{label:'Contains dairy',type:'warn'},{label:'Contains eggs',type:'warn'}]}]];
+
+const allergenChecks=[[{name:'Allergen Summary',desc:'⚠️ Contains: Gluten (pasta), Dairy (parmesan), Eggs (fresh pasta). ✅ Free from: Nuts, Shellfish, Soy, Fish.'},{name:'Allergen Summary',desc:'⚠️ Contains: Fish (tuna + anchovies), Eggs. ✅ Free from: Gluten, Dairy, Nuts, Shellfish.'},{name:'Allergen Summary',desc:'⚠️ Contains: Dairy (butter in potato). ✅ Free from: Gluten, Nuts, Fish, Shellfish.'},{name:'Allergen Summary',desc:'⚠️ Contains: Dairy (cream), Eggs, Gluten (wafer biscuit). ✅ Free from: Nuts, Fish, Shellfish.'}],[{name:'Allergen Summary',desc:'⚠️ Contains: Gluten (brioche bun), Dairy (cheese), Eggs (sauce). ✅ Free from: Nuts, Fish. Ask for GF bun.'},{name:'Allergen Summary',desc:'⚠️ Contains: Gluten (coating), Dairy (blue cheese dip). ✅ Free from: Nuts, Fish, Eggs. Order naked for GF.'},{name:'Allergen Summary',desc:'⚠️ Contains: Dairy (cheddar), Gluten (tortilla strips). ✅ Free from: Nuts, Eggs, Fish. Skip strips for GF.'},{name:'Allergen Summary',desc:'⚠️ Contains: Dairy (cheese, sour cream). ✅ Free from: Gluten, Nuts, Fish, Eggs. Naturally GF!'}],[{name:'Allergen Summary',desc:'✅ Naturally GF and dairy-light. Confirm no flour in the cherry sauce reduction. ✅ Free from: Gluten, Nuts, Shellfish.'},{name:'Allergen Summary',desc:'⚠️ Contains: Gluten (bread croûton), Dairy (Gruyère). ✅ Free from: Nuts, Fish, Eggs in soup itself.'},{name:'Allergen Summary',desc:'⚠️ Contains: Gluten (sourdough), Dairy (goat\'s cheese), Nuts (walnuts). ✅ Free from: Fish, Shellfish.'},{name:'Allergen Summary',desc:'⚠️ Contains: Gluten (puff pastry), Dairy (crème fraîche), Eggs. ✅ Free from: Nuts, Fish, Shellfish.'}]];
+
+const plainEnglish=[[{name:"What you're getting",desc:"Big flat noodles with a hearty meat sauce. The meat is wild boar — it's like pork but richer. Cooked slowly for hours so it's super tender. Topped with parmesan cheese and good olive oil."},{name:"What you're getting",desc:"A salad. Tuna, green beans, olives, pickles, boiled egg, tomatoes, and anchovies — those are small salty fish. Dressed simply with mustard vinaigrette."},{name:"What you're getting",desc:"A big bowl of beef stew, French style. Cooked in red wine for a long time until the beef is really soft. Served with the smoothest, butteriest mashed potato you've ever had."},{name:"What you're getting",desc:"Vanilla custard dessert with a crunchy burnt sugar top. Smells faintly of orange blossom. You tap the top with a spoon to break the sugar crust. Very rich — often shared."}],[{name:"What you're getting",desc:"Two beef patties squashed flat and cooked on a hot grill. Stacked in a soft bun with cheese, salad, pickles, and sauce. Skinny crispy fries on the side. A proper pub burger."},{name:"What you're getting",desc:"Twelve fried chicken wings coated in hot, tangy sauce. Sticky, spicy, and messy in the best way. Comes with crunchy veggie sticks and a cool creamy dipping sauce."},{name:"What you're getting",desc:"A big hearty salad with grilled spiced chicken. Has corn, beans, jalapeños (hot peppers), tomatoes, cheese, and crunchy tortilla chips on top. Dressed with a fresh lime dressing."},{name:"What you're getting",desc:"Crispy potato skins — like the best bits of a jacket potato — loaded with melted cheese and crispy bacon. Sour cream on top. Perfect to share at the table."}],[{name:"What you're getting",desc:"A duck breast — it's like chicken but richer and darker. Cooked slightly pink in the middle. Comes with a sweet-sour cherry sauce and crispy potatoes cooked in duck fat."},{name:"What you're getting",desc:"A very filling soup made from lots of slowly cooked onions. Deeply sweet and savoury. There's a big piece of toasted bread and a thick layer of melted cheese on top. Eat it with a long spoon."},{name:"What you're getting",desc:"A salad with bitter leaves and a round of warm, soft goat's cheese on a small piece of toast. Has sweet candied walnuts, dates, pear slices, and a honey dressing. Quite rich and elegant."},{name:"What you're getting",desc:"A small warm apple tart flipped upside down so the apples are on top, caramelised and golden. Flaky buttery pastry underneath. Served warm with a spoonful of thick French cream."}]];
+
+const moodRecs=[{chicken:{any:{dish:'Pollo alla Parmigiana',emoji:'🍗',desc:'Ask your server about the chicken parm — breaded chicken breast with marinara sauce and melted mozzarella, served with a side of rigatoni. A crowd favourite not always on the printed menu.',tags:['🍝 Pasta side available','🧀 Contains dairy','🌾 Contains gluten'],tagTypes:['note','warn','warn']},gf:{dish:'GF Chicken Parm + Grilled Veggies',emoji:'🍗',desc:'Ask your server for the chicken without the breadcrumb coating — grilled in olive oil instead. Request it with seasonal grilled vegetables rather than pasta. Most Italian kitchens can do this easily.',tags:['✅ Gluten-free adaptable','🥦 Grilled veg side','🧀 Ask for no cheese to go dairy-free'],tagTypes:['free','note','note']}},seafood:{any:{dish:'Spaghetti alle Vongole',emoji:'🐟',desc:'Look for a clam pasta or ask your server if there\'s a seafood linguine available. Clams or mussels in white wine, garlic, olive oil, and parsley over thin spaghetti is a classic Italian seafood pasta.',tags:['🐚 Shellfish dish','🍝 Pasta-based','🌾 Contains gluten'],tagTypes:['note','note','warn']},gf:{dish:'Salmon + Grilled Zucchini',emoji:'🐟',desc:'If there\'s no GF pasta available, ask for a simply grilled salmon fillet with a side of zucchini, cherry tomatoes, and olive oil. Italian kitchens almost always have this.',tags:['✅ Naturally gluten-free','🐟 Ask for grilled, not breaded','🫒 Olive oil dressing'],tagTypes:['free','note','note']}},sandwich:{any:{dish:'Panino con Prosciutto e Mozzarella',emoji:'🥪',desc:'Ask if the kitchen makes a panino — a pressed Italian sandwich with cured prosciutto, fresh mozzarella, basil, and tomato on ciabatta. Often available as a lunch special.',tags:['🥖 Ciabatta bread','🧀 Contains dairy','🥩 Prosciutto (cured pork)'],tagTypes:['warn','warn','note']},gf:{dish:'Antipasto Plate (GF-safe)',emoji:'🧀',desc:'Italian restaurants rarely have GF bread. Ask for an antipasto plate — cured meats, marinated vegetables, olives, and cheese with no bread. A satisfying, fully gluten-free alternative.',tags:['✅ No bread · naturally GF','🥩 Cured meats & veg','🫒 Marinated olives included'],tagTypes:['free','note','note']}}},{chicken:{any:{dish:'Crispy Chicken Sandwich',emoji:'🍗',desc:'Order the crispy chicken sandwich — a fried chicken breast in a brioche bun with lettuce, pickles, and sriracha mayo. If it\'s not on the menu, the kitchen can usually build one from the chicken tender basket.',tags:['🍔 Served in brioche bun','🌶️ Ask for mild or spicy','🌾 Contains gluten'],tagTypes:['note','note','warn']},gf:{dish:'Grilled Chicken + Loaded Potato Skins',emoji:'🍗',desc:'Skip the battered chicken and go for a grilled chicken breast — ask your server if they can plate it simply with seasoning and a side of loaded potato skins, which are naturally gluten-free.',tags:['✅ GF-friendly combo','🥔 Potato skins are naturally GF','🔥 Ask for grilled not fried'],tagTypes:['free','free','note']}},seafood:{any:{dish:'Fish & Chips',emoji:'🐟',desc:'The pub classic — battered cod or haddock fillet with thick-cut chips, mushy peas, and tartar sauce. Ask your server what fish is fresh today. A squeeze of malt vinegar is non-negotiable.',tags:['🐟 Beer-battered fish','🌾 Contains gluten (batter)','🍟 Served with chips'],tagTypes:['note','warn','note']},gf:{dish:'Grilled Salmon + Southwest Salad',emoji:'🐟',desc:'Ask the kitchen for a grilled salmon fillet instead of battered fish. Pair it with the Southwest salad minus the tortilla strips for a fully gluten-free, high-protein pub meal.',tags:['✅ Ask for GF grilled salmon','🥗 Southwest salad, no strips','🌾 Skip the batter entirely'],tagTypes:['free','free','note']}},sandwich:{any:{dish:'The Crown Classic Smash Burger',emoji:'🥪',desc:'The smash burger is the move — two smashed patties, American cheese, pickles, and Thousand Island in a toasted brioche bun. Ask for extra pickles. Add bacon for $2.',tags:['🍔 Double smash patty','🥒 Extra pickles recommended','🌾 Brioche bun contains gluten'],tagTypes:['note','note','warn']},gf:{dish:'Smash Burger in Lettuce Wrap',emoji:'🥪',desc:'Get the smash burger but swap the brioche bun for a crispy lettuce wrap — most pub kitchens do this no problem. Same great patty, cheese, pickles, and sauce, just without the gluten.',tags:['✅ Lettuce wrap = GF','🥬 Iceberg wrap holds up well','🧀 Cheese & sauce are GF'],tagTypes:['free','note','note']}}},{chicken:{any:{dish:'Poulet Rôti aux Herbes',emoji:'🍗',desc:'Ask your server if there\'s a roast chicken or chicken supreme available — French bistros almost always have one. Expect it with a Dijon cream sauce, roasted potatoes, and tarragon.',tags:['🐓 Roast or pan-seared','🥛 Cream sauce (contains dairy)','🍷 Often served with wine sauce'],tagTypes:['note','warn','note']},gf:{dish:'Chicken Supreme, No Roux Sauce',emoji:'🍗',desc:'Order the chicken but ask your server to hold the flour-thickened sauce — request a simple butter and herb jus instead, which is GF. Pair with the heritage carrots or a green salad on the side.',tags:['✅ GF with sauce swap','🧈 Butter jus instead of roux','🥕 Heritage carrots on the side'],tagTypes:['free','note','note']}},seafood:{any:{dish:'Sole Meunière ou Saumon Grillé',emoji:'🐟',desc:'Ask about the fish of the day — French bistros rotate seasonal fish dishes. Sole meunière (pan-fried in butter and lemon) or a simply grilled salmon with beurre blanc are beautiful choices.',tags:['🐟 Ask for the catch of the day','🧈 Butter sauce (dairy)','🍋 Light and elegant'],tagTypes:['note','warn','note']},gf:{dish:'Grilled Sole or Salmon + Simple Salad',emoji:'🐟',desc:'Ask for fish grilled simply in butter and lemon — sole meunière without the flour dredge is naturally GF. Pair with a green salad dressed in vinaigrette. Avoid any sauce described as "velouté".',tags:['✅ Ask for no flour dredge','🚫 Avoid velouté sauces','🥗 Green salad pairs perfectly'],tagTypes:['free','warn','note']}},sandwich:{any:{dish:'Croque Monsieur',emoji:'🥪',desc:'A proper French bistro will have a Croque Monsieur — toasted country bread with ham and Gruyère, topped with a béchamel sauce and broiled until golden. Rich, indulgent, and very French.',tags:['🧀 Gruyère + béchamel','🥖 Country bread (contains gluten)','🍖 Ham (pork)'],tagTypes:['warn','warn','note']},gf:{dish:'Charcuterie & Crudités Plate',emoji:'🧀',desc:'French bistros rarely have GF bread. Ask instead for a charcuterie plate — cured duck, cornichons, Dijon mustard, and seasonal crudités. Ask your server to hold the croûtons and bread.',tags:['✅ No bread version available','🦆 Cured duck & meats','🥒 Cornichons & crudités'],tagTypes:['free','note','note']}}}];
+
+// STATE
+let currentVenue=0,currentItem=0,activeMood=null,gfMode=false,isPlaying=false;
+let utterance=null,wordSpans=[],fontStep=2;
+const fontSteps=['XS','S','M','L','XL'],fontSizes=['0.78rem','0.85rem','0.92rem','1.05rem','1.18rem'];
+
+// TAB SWITCHING
+function switchMainTab(tab,btn){
+  document.querySelectorAll('.tab-pill').forEach(p=>p.classList.remove('active'));
+  btn.classList.add('active');
+  const map={demo:'tab-demo',workflow:'tab-workflow',analytics:'tab-analytics-left'};
+  ['tab-demo','tab-workflow','tab-analytics-left'].forEach(id=>document.getElementById(id).style.display=id===map[tab]?'':'none');
+}
+
+function switchMobile(which){
+  ['mTabHome','mTabMenu','mTabStats'].forEach(id=>document.getElementById(id).classList.remove('active'));
+  ['colLeft','colMain','colRight'].forEach(id=>document.getElementById(id).classList.remove('mob-active'));
+  if(which==='home'){document.getElementById('mTabHome').classList.add('active');document.getElementById('colLeft').classList.add('mob-active');}
+  if(which==='menu'){document.getElementById('mTabMenu').classList.add('active');document.getElementById('colMain').classList.add('mob-active');}
+  if(which==='stats'){document.getElementById('mTabStats').classList.add('active');document.getElementById('colRight').classList.add('mob-active');}
+}
+
+// VENUE
+function switchVenue(idx,btn){
+  currentVenue=idx;currentItem=0;
+  document.querySelectorAll('.venue-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  stopAudio();clearMood();
+  const card=document.getElementById('venueIntelCard');
+  document.getElementById('venueThinking').style.display='flex';
+  card.style.display='none';
+  setTimeout(()=>{
+    const v=venues[idx];
+    document.getElementById('venueHeroBg').className='venue-intel-hero '+v.theme;
+    document.getElementById('venueIcon').textContent=v.emoji;
+    document.getElementById('venueName').textContent=v.name;
+    document.getElementById('venueType').textContent=v.type;
+    document.getElementById('venueSummary').innerHTML=v.summary;
+    document.getElementById('venueTags').innerHTML=v.tags.map(t=>`<span class="venue-tag">${t}</span>`).join('');
+    document.getElementById('restaurantName').textContent=v.name;
+    document.getElementById('menuHeader').className=v.theme+' menu-display-header';
+    rebuildChips();loadItem(0);updateVenueGfAlert();
+    if(gfMode)renderGFBanner();
+    document.getElementById('venueThinking').style.display='none';
+    card.style.display='';
+  },600);
+}
+
+function rebuildChips(){
+  document.getElementById('menuChips').innerHTML=venues[currentVenue].items.map((it,i)=>
+    `<button class="menu-chip${i===0?' active':''}" onclick="selectItem(${i},this)">${it.emoji} ${it.name.split(' ').slice(0,3).join(' ')}</button>`
+  ).join('');
+}
+
+function loadItem(idx){
+  const item=venues[currentVenue].items[idx];
+  document.getElementById('itemName').textContent=item.name;
+  document.getElementById('itemPrice').textContent=item.price;
+  document.getElementById('itemDesc').textContent=item.desc;
+  document.getElementById('menuCatLabel').textContent=item.category;
+  hideResult();
+  document.getElementById('aiOutputTitle').textContent='Awaiting request…';
+}
+
+function selectItem(idx,btn){
+  currentItem=idx;
+  document.querySelectorAll('.menu-chip').forEach(c=>c.classList.remove('active'));
+  btn.classList.add('active');
+  loadItem(idx);
+  if(gfMode)renderGFBanner();
+}
+
+// DISPLAY SETTINGS
+function toggleDyslexia(btn){
+  btn.classList.toggle('on');
+  document.getElementById('menuItemBox').classList.toggle('dyslexia',btn.classList.contains('on'));
+}
+
+function toggleHighlight(btn){
+  const on=btn.classList.contains('on');
+  document.querySelectorAll('#itemDesc,#resultDesc').forEach(el=>{
+    el.style.background=on?'linear-gradient(90deg,rgba(255,149,0,0.08) 0%,transparent 100%)':'';
+  });
+}
+
+function toggleGlutenFree(btn){
+  btn.classList.toggle('on');
+  gfMode=btn.classList.contains('on');
+  const banner=document.getElementById('gfBanner');
+  if(gfMode){renderGFBanner();banner.style.display='block';updateVenueGfAlert();}
+  else{banner.style.display='none';document.getElementById('venueGfAlert').style.display='none';}
+  if(activeMood){const ab=document.querySelector('.mood-btn.active');if(ab)selectMood(activeMood,ab);}
+}
+
+function updateVenueGfAlert(){
+  const el=document.getElementById('venueGfAlert');
+  if(gfMode){
+    el.style.display='block';
+    el.textContent=venues[currentVenue].gfWarning;
+    el.className='venue-gf-alert '+(venues[currentVenue].id==='pub'?'caution':'unsafe');
+  } else {el.style.display='none';}
+}
+
+function renderGFBanner(){
+  const gfData=venues[currentVenue].gfStatus[currentItem];
+  const inner=document.getElementById('gfBannerInner');
+  inner.className='gf-banner '+gfData.status;
+  const recHtml=gfData.recs.map(i=>{
+    const it=venues[currentVenue].items[i];
+    return `<button class="gf-rec-chip" onclick="jumpToItem(${i})">${it.emoji} ${it.name.split(' ').slice(0,3).join(' ')}…</button>`;
+  }).join('');
+  inner.innerHTML=`<div class="gf-banner-title">${gfData.icon} ${gfData.title}</div><div class="gf-banner-body">${gfData.msg}</div>${gfData.recs.length?`<div style="margin-top:6px;font-size:0.66rem;font-weight:700;opacity:0.75">GF-safe picks:</div><div class="gf-rec-chips">${recHtml}</div>`:''}`;
+}
+
+function jumpToItem(idx){
+  currentItem=idx;
+  document.querySelectorAll('.menu-chip').forEach((c,i)=>c.classList.toggle('active',i===idx));
+  loadItem(idx);renderGFBanner();
+}
+
+function changeFontSize(dir){
+  fontStep=Math.max(0,Math.min(4,fontStep+dir));
+  document.getElementById('fontSizeDisplay').textContent=fontSteps[fontStep];
+  document.getElementById('itemDesc').style.fontSize=fontSizes[fontStep];
+}
+
+// MOOD
+function selectMood(mood,btn){
+  if(activeMood===mood){clearMood();return;}
+  activeMood=mood;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const card=document.getElementById('recCard');
+  card.classList.add('visible');
+  document.getElementById('recDish').textContent='';
+  document.getElementById('recDesc').textContent='';
+  document.getElementById('recTags').innerHTML='';
+  document.getElementById('recEmoji').textContent=mood==='chicken'?'🍗':mood==='seafood'?'🐟':'🥪';
+  document.getElementById('recLabel').textContent='Finding the best match…';
+  document.getElementById('recThinking').style.display='flex';
+  const rec=moodRecs[currentVenue][mood][gfMode?'gf':'any'];
+  const prompt=`You are a friendly restaurant concierge. The restaurant is: ${venues[currentVenue].name} (${venues[currentVenue].type}). The diner wants: ${mood}.${gfMode?' They are strictly gluten-free.':''} Give a warm, conversational recommendation in 3 short plain sentences (max 12 words each). Suggest a specific dish or combination. Be practical — if the exact dish isn't guaranteed on the menu, say what to ask the server. No jargon. No preamble. Just the recommendation.`;
+  setTimeout(()=>{
+    callClaude(prompt,text=>{
+      document.getElementById('recThinking').style.display='none';
+      document.getElementById('recEmoji').textContent=rec.emoji;
+      document.getElementById('recLabel').textContent=gfMode?'🌾 GF Pick for You':'⭐ Our Pick for You';
+      document.getElementById('recDish').textContent=rec.dish;
+      document.getElementById('recDesc').textContent=text||rec.desc;
+      document.getElementById('recTags').innerHTML=rec.tags.map((t,i)=>`<span class="rec-tag ${rec.tagTypes[i]==='free'?'tag-free':rec.tagTypes[i]==='warn'?'tag-warn':'tag-note'}">${t}</span>`).join('');
+    });
+  },700);
+}
+
+function clearMood(){
+  activeMood=null;
+  document.querySelectorAll('.mood-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('recCard').classList.remove('visible');
+  document.getElementById('recThinking').style.display='none';
+}
+
+// AI ACTIONS
+function showThinking(msg){
+  document.getElementById('aiPlaceholder').style.display='none';
+  document.getElementById('aiResult').classList.remove('visible');
+  const t=document.getElementById('aiThinking');
+  t.classList.add('visible');
+  document.getElementById('thinkingText').textContent=msg;
+}
+
+function hideResult(){
+  document.getElementById('aiResult').classList.remove('visible');
+  document.getElementById('aiPlaceholder').style.display='flex';
+  document.getElementById('aiThinking').classList.remove('visible');
+  stopAudio();
+}
+
+function showResult(name,price,desc,allergens){
+  document.getElementById('aiThinking').classList.remove('visible');
+  document.getElementById('aiPlaceholder').style.display='none';
+  document.getElementById('resultName').textContent=name;
+  document.getElementById('resultPrice').textContent=price||venues[currentVenue].items[currentItem].price;
+  const descEl=document.getElementById('resultDesc');
+  wordSpans=[];
+  descEl.innerHTML=desc.split(' ').map((w,i)=>`<span class="rword" data-i="${i}">${w} </span>`).join('');
+  wordSpans=Array.from(descEl.querySelectorAll('.rword'));
+  const row=document.getElementById('allergenRow');
+  row.innerHTML='';
+  if(allergens)allergens.forEach(a=>{
+    const tag=document.createElement('span');
+    tag.className='allergen-tag '+(a.type==='free'?'free':'warn');
+    tag.textContent=a.label;row.appendChild(tag);
+  });
+  document.getElementById('aiResult').classList.add('visible');
+  if(document.getElementById('autoPlayCheck').checked)setTimeout(()=>startAudio(),300);
+}
+
+function callClaude(prompt,onSuccess){
+  fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})})
+  .then(r=>r.json()).then(data=>{const text=data.content?.map(b=>b.text||'').join('')||'';onSuccess(text);})
+  .catch(()=>onSuccess(null));
+}
+
+function simplifyMenu(){
+  document.getElementById('aiOutputTitle').textContent='Simplifying menu language…';
+  showThinking('Rewriting in plain English for dyslexic readers…');
+  const item=venues[currentVenue].items[currentItem];
+  const gfNote=gfMode?' The user is gluten-free — note if this dish is safe or suggest a swap.':'';
+  const prompt=`You are an accessibility specialist helping dyslexic diners understand restaurant menus. Rewrite this menu item in plain, simple English. Use short sentences (max 10 words each). Avoid culinary jargon. Keep it warm and appetizing. Max 4 sentences total.${gfNote}\nMenu item: "${item.name}" - ${item.desc}\nRespond with ONLY the simplified description, nothing else.`;
+  setTimeout(()=>callClaude(prompt,text=>{const s=simplifications[currentVenue][currentItem];document.getElementById('aiOutputTitle').textContent='✦ Simplified — Plain English';showResult(s.name,null,text||s.desc,s.allergens);}),900);
+}
+
+function checkAllergens(){
+  document.getElementById('aiOutputTitle').textContent='Checking allergens…';
+  showThinking('Scanning for allergens and dietary information…');
+  const item=venues[currentVenue].items[currentItem];
+  const gfNote=gfMode?' Also clearly state whether this dish is gluten-free or not.':'';
+  const prompt=`You are a food safety expert. Analyze this menu item and list all allergens clearly and simply.\nMenu item: "${item.name}" - ${item.desc}\nReply in 2-3 short plain sentences. Start with "Contains:" then list allergens. Then "Safe from:" and list what's absent. Max 40 words.${gfNote}`;
+  setTimeout(()=>callClaude(prompt,text=>{const a=allergenChecks[currentVenue][currentItem];const s=simplifications[currentVenue][currentItem];document.getElementById('aiOutputTitle').textContent='⚠ Allergen Summary';showResult(a.name,null,text||a.desc,s.allergens);}),1100);
+}
+
+function translateSimple(){
+  document.getElementById('aiOutputTitle').textContent='Translating to plain English…';
+  showThinking('Converting culinary language to everyday words…');
+  const item=venues[currentVenue].items[currentItem];
+  const prompt=`You are helping someone with dyslexia understand what they would actually receive if they ordered this dish. Explain it in 3-4 very short, plain sentences as if talking to a friend. No jargon whatsoever.\nMenu item: "${item.name}" - ${item.desc}\nStart with "What you're getting:" then explain. Max 50 words.`;
+  setTimeout(()=>callClaude(prompt,text=>{const p=plainEnglish[currentVenue][currentItem];document.getElementById('aiOutputTitle').textContent='🌍 Plain English Explanation';showResult(p.name,null,text||p.desc,null);}),800);
+}
+
+// AUDIO
+function toggleAudio(){isPlaying?stopAudio():startAudio();}
+
+function startAudio(){
+  const descEl=document.getElementById('resultDesc');
+  const name=document.getElementById('resultName').textContent;
+  const fullText=name+'. '+descEl.textContent;
+  stopAudio();
+  if('speechSynthesis' in window){
+    utterance=new SpeechSynthesisUtterance(fullText);
+    utterance.rate=0.82;utterance.pitch=1.05;
+    utterance.onboundary=e=>{
+      if(e.name!=='word')return;
+      wordSpans.forEach(s=>s.classList.remove('lit'));
+      const textSoFar=fullText.substring(0,e.charIndex);
+      const wIdx=textSoFar.trim().split(/\s+/).length-1-name.split(' ').length-1;
+      if(wIdx>=0&&wIdx<wordSpans.length){wordSpans[wIdx].classList.add('lit');wordSpans[wIdx].scrollIntoView({behavior:'smooth',block:'nearest'});}
+    };
+    utterance.onend=()=>{wordSpans.forEach(s=>s.classList.remove('lit'));stopAudio();};
+    window.speechSynthesis.speak(utterance);
+  }
+  isPlaying=true;
+  document.getElementById('playBtn').textContent='⏸';
+  document.getElementById('waveform').classList.add('playing');
+  document.getElementById('audioLabel').textContent='Reading aloud…';
+}
+
+function stopAudio(){
+  if('speechSynthesis' in window)window.speechSynthesis.cancel();
+  wordSpans.forEach(s=>s.classList.remove('lit'));
+  isPlaying=false;
+  const btn=document.getElementById('playBtn');if(btn)btn.textContent='▶';
+  const wf=document.getElementById('waveform');if(wf)wf.classList.remove('playing');
+  const lbl=document.getElementById('audioLabel');if(lbl)lbl.textContent='Read aloud';
+}
+
+// INIT
+window.addEventListener('load',()=>{
+  const vals=['1,284','−41%','4.7','−38%'];
+  ['kpi1','kpi2','kpi3','kpi4'].forEach((id,i)=>{
+    const el=document.getElementById(id);el.textContent='…';
+    setTimeout(()=>el.textContent=vals[i],400+i*150);
+  });
+  document.getElementById('menuItemBox').classList.add('dyslexia');
+});
+</script>
+</body>
+</html>
