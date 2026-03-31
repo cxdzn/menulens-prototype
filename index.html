@@ -854,146 +854,311 @@
   .scan-status strong { color: var(--ink); }
 
 
+  
   /* ─── CX PROBLEM HERO ─── */
   .cx-hero {
-    background: linear-gradient(135deg, rgba(42,125,111,0.08) 0%, rgba(232,168,64,0.12) 100%);
-    border: 1.5px solid var(--border);
-    border-radius: 20px;
-    padding: 1.4rem;
-    box-shadow: 0 6px 24px rgba(26,18,8,0.06);
+    background: linear-gradient(135deg, var(--teal) 0%, #1E6B5E 58%, #175247 100%);
+    border-radius: 28px;
+    padding: 1.5rem;
+    color: white;
+    box-shadow: 0 18px 48px rgba(22, 73, 64, 0.22);
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
   }
 
   .cx-hero::before {
     content: '';
     position: absolute;
-    top: -40px; right: -40px;
-    width: 120px; height: 120px;
-    background: radial-gradient(circle, rgba(232,168,64,0.18) 0%, rgba(232,168,64,0) 70%);
+    inset: 0;
+    background:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.16), transparent 28%),
+      radial-gradient(circle at 85% 18%, rgba(232,168,64,0.20), transparent 20%),
+      linear-gradient(180deg, rgba(255,255,255,0.05), transparent 42%);
     pointer-events: none;
+  }
+
+  .cx-hero-grid {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(280px, 0.9fr);
+    gap: 1.25rem;
+    align-items: stretch;
+  }
+
+  .cx-hero-copy-wrap {
+    padding: 0.35rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .cx-hero-eyebrow {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    margin-bottom: 0.85rem;
-    padding: 5px 10px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.7);
-    border: 1px solid var(--border);
+    margin-bottom: 0.9rem;
+    padding: 6px 11px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(10px);
     font-family: 'DM Mono', monospace;
     font-size: 0.66rem;
     font-weight: 500;
     letter-spacing: 0.08em;
     text-transform: uppercase;
-    color: var(--ink-soft);
-    position: relative;
-    z-index: 1;
+    color: rgba(255,255,255,0.82);
+    width: fit-content;
   }
 
   .cx-hero-title {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.45rem;
-    line-height: 1.15;
+    font-size: clamp(1.75rem, 3vw, 2.6rem);
+    line-height: 0.98;
     font-weight: 800;
-    color: var(--ink);
-    margin-bottom: 0.75rem;
-    max-width: 16ch;
-    position: relative;
-    z-index: 1;
+    color: white;
+    margin-bottom: 0.95rem;
+    max-width: 11ch;
+    letter-spacing: -0.02em;
   }
 
   .cx-hero-copy {
-    font-size: 0.92rem;
-    line-height: 1.75;
-    color: var(--ink-mid);
-    position: relative;
-    z-index: 1;
+    font-size: 0.96rem;
+    line-height: 1.78;
+    color: rgba(255,255,255,0.92);
+    max-width: 62ch;
   }
 
-  .cx-hero-copy p + p { margin-top: 0.7rem; }
+  .cx-hero-copy p + p { margin-top: 0.72rem; }
 
   .cx-chain {
-    margin: 1rem 0 0.9rem;
+    margin: 1rem 0 0.95rem;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
-    position: relative;
-    z-index: 1;
   }
 
   .cx-chain-step {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 12px;
+    padding: 8px 13px;
     border-radius: 999px;
-    background: var(--warm-white);
-    border: 1px solid var(--border);
+    background: rgba(255,255,255,0.14);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(10px);
     font-size: 0.74rem;
     font-weight: 600;
-    color: var(--ink-mid);
-    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    color: white;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
   }
 
   .cx-chain-arrow {
     display: inline-flex;
     align-items: center;
-    color: var(--ink-soft);
+    color: rgba(255,255,255,0.58);
     font-size: 0.85rem;
-    padding: 0 2px;
+    padding: 0 1px;
   }
 
-  .cx-impact {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(122,98,64,0.18);
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.75rem;
+  .cx-preview {
     position: relative;
-    z-index: 1;
+    border-radius: 24px;
+    padding: 1rem;
+    background: linear-gradient(180deg, rgba(255,255,255,0.16), rgba(255,255,255,0.08));
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(16px);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
-  .cx-impact-card {
-    background: rgba(255,255,255,0.72);
-    border: 1px solid rgba(232,217,188,0.95);
-    border-radius: 14px;
-    padding: 0.85rem 0.8rem;
+  .cx-preview::after {
+    content: '';
+    position: absolute;
+    inset: auto -40px -40px auto;
+    width: 130px;
+    height: 130px;
+    background: radial-gradient(circle, rgba(232,168,64,0.22) 0%, rgba(232,168,64,0) 72%);
+    pointer-events: none;
   }
 
-  .cx-impact-label {
-    font-size: 0.64rem;
-    font-weight: 600;
+  .cx-preview-window {
+    border-radius: 22px;
+    overflow: hidden;
+    background: rgba(255,253,249,0.96);
+    color: var(--ink);
+    box-shadow: 0 20px 42px rgba(10, 35, 31, 0.22);
+    border: 1px solid rgba(255,255,255,0.65);
+  }
+
+  .cx-preview-topbar {
+    padding: 0.72rem 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(245,236,215,0.78);
+    border-bottom: 1px solid rgba(232,217,188,0.9);
+  }
+
+  .cx-preview-dots {
+    display: flex;
+    gap: 6px;
+  }
+
+  .cx-preview-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: rgba(122,98,64,0.38);
+  }
+
+  .cx-preview-label {
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .cx-preview-body {
+    padding: 1rem;
+    display: grid;
+    gap: 0.8rem;
+  }
+
+  .cx-preview-stat {
+    background: linear-gradient(180deg, #FFFDF9, #F8F1E5);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 0.9rem;
+  }
+
+  .cx-preview-stat-label {
+    font-size: 0.66rem;
+    font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
     color: var(--ink-soft);
     margin-bottom: 0.35rem;
   }
 
-  .cx-impact-value {
+  .cx-preview-stat-value {
     font-family: 'Bricolage Grotesque', sans-serif;
-    font-size: 1.05rem;
+    font-size: 1.35rem;
     font-weight: 800;
     color: var(--ink);
+    line-height: 1.05;
+  }
+
+  .cx-preview-stat-sub {
+    margin-top: 0.28rem;
+    font-size: 0.72rem;
+    color: var(--ink-soft);
+    line-height: 1.4;
+  }
+
+  .cx-preview-flow {
+    display: grid;
+    gap: 0.55rem;
+  }
+
+  .cx-preview-flow-step {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 16px;
+    background: rgba(42,125,111,0.06);
+    border: 1px solid rgba(42,125,111,0.12);
+  }
+
+  .cx-preview-flow-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(42,125,111,0.12);
+    color: var(--teal);
+    font-size: 0.9rem;
+    flex-shrink: 0;
+  }
+
+  .cx-preview-flow-copy {
+    min-width: 0;
+  }
+
+  .cx-preview-flow-title {
+    font-size: 0.76rem;
+    font-weight: 700;
+    color: var(--ink);
+    line-height: 1.2;
+  }
+
+  .cx-preview-flow-sub {
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+    line-height: 1.35;
+    margin-top: 0.1rem;
+  }
+
+  .cx-impact {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255,255,255,0.16);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .cx-impact-card {
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(12px);
+    border-radius: 18px;
+    padding: 0.9rem 0.85rem;
+  }
+
+  .cx-impact-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 0.35rem;
+  }
+
+  .cx-impact-value {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: white;
     line-height: 1.1;
   }
 
   .cx-impact-sub {
     margin-top: 0.22rem;
-    font-size: 0.68rem;
-    color: var(--ink-soft);
+    font-size: 0.69rem;
+    color: rgba(255,255,255,0.7);
+    line-height: 1.45;
   }
+
 
 
   /* ─── RESPONSIVE ─── */
   @media (max-width: 900px) {
     main { grid-template-columns: 1fr; }
     .right-panel { border-top: 1.5px solid var(--border); }
+    .cx-hero-grid { grid-template-columns: 1fr; }
     .cx-impact { grid-template-columns: 1fr; }
     .cx-hero-title { max-width: none; }
+    .cx-preview { padding: 0.85rem; }
   }
 
   /* ─── FADE IN ─── */
@@ -1291,39 +1456,96 @@
 
     <!-- DEMO TAB -->
     <div id="tab-demo" class="tab-view active">
+      
       <section class="cx-hero fade-in">
-        <div class="cx-hero-eyebrow">Experience Insight</div>
-        <h1 class="cx-hero-title">The CX Problem We’re Solving</h1>
-        <div class="cx-hero-copy">
-          <p>Dyslexia affects ~15–20% of the population, yet most restaurant menus are designed without cognitive accessibility in mind.</p>
-          <div class="cx-chain">
-            <span class="cx-chain-step">Cognitive overload</span>
-            <span class="cx-chain-arrow">→</span>
-            <span class="cx-chain-step">Anxiety</span>
-            <span class="cx-chain-arrow">→</span>
-            <span class="cx-chain-step">“Safe” ordering</span>
-            <span class="cx-chain-arrow">→</span>
-            <span class="cx-chain-step">Lower spend</span>
-            <span class="cx-chain-arrow">→</span>
-            <span class="cx-chain-step">Reduced satisfaction</span>
+        <div class="cx-hero-grid">
+          <div class="cx-hero-copy-wrap">
+            <div class="cx-hero-eyebrow">Experience Insight</div>
+            <h1 class="cx-hero-title">The CX Problem We’re Solving</h1>
+            <div class="cx-hero-copy">
+              <p>Dyslexia affects ~15–20% of the population, yet most restaurant menus are designed without cognitive accessibility in mind.</p>
+              <div class="cx-chain">
+                <span class="cx-chain-step">Cognitive overload</span>
+                <span class="cx-chain-arrow">→</span>
+                <span class="cx-chain-step">Anxiety</span>
+                <span class="cx-chain-arrow">→</span>
+                <span class="cx-chain-step">“Safe” ordering</span>
+                <span class="cx-chain-arrow">→</span>
+                <span class="cx-chain-step">Lower spend</span>
+                <span class="cx-chain-arrow">→</span>
+                <span class="cx-chain-step">Reduced satisfaction</span>
+              </div>
+              <p>MenuLens helps operators reduce cognitive friction in real time.</p>
+              <p>Instead of treating accessibility as compliance alone, this workflow turns hard-to-read menus into a measurable CX lever across conversion, spend, satisfaction, and return intent.</p>
+              <p>Increasing order confidence, reducing errors, and measuring the revenue impact of accessible design.</p>
+            </div>
+            <div class="cx-impact">
+              <div class="cx-impact-card">
+                <div class="cx-impact-label">Operator value</div>
+                <div class="cx-impact-value">Higher confidence</div>
+                <div class="cx-impact-sub">Guests can explore more of the menu instead of defaulting to familiar choices.</div>
+              </div>
+              <div class="cx-impact-card">
+                <div class="cx-impact-label">Revenue signal</div>
+                <div class="cx-impact-value">+$12.40</div>
+                <div class="cx-impact-sub">Modeled spend lift tied to more confident, less error-prone ordering.</div>
+              </div>
+              <div class="cx-impact-card">
+                <div class="cx-impact-label">CX outcome</div>
+                <div class="cx-impact-value">Measurable loop</div>
+                <div class="cx-impact-sub">Accessibility improvements connected directly to satisfaction and return intent.</div>
+              </div>
+            </div>
           </div>
-          <p>MenuLens breaks this cycle by reducing cognitive friction in real time — transforming accessibility into a measurable driver of conversion, customer confidence, and revenue.</p>
-        </div>
-        <div class="cx-impact">
-          <div class="cx-impact-card">
-            <div class="cx-impact-label">User impact</div>
-            <div class="cx-impact-value">Higher confidence</div>
-            <div class="cx-impact-sub">Clearer decisions at the point of order</div>
-          </div>
-          <div class="cx-impact-card">
-            <div class="cx-impact-label">Business impact</div>
-            <div class="cx-impact-value">+$12.40</div>
-            <div class="cx-impact-sub">Modeled spend lift per visit</div>
-          </div>
-          <div class="cx-impact-card">
-            <div class="cx-impact-label">CX signal</div>
-            <div class="cx-impact-value">Closed loop</div>
-            <div class="cx-impact-sub">Accessibility tied directly to measurable outcomes</div>
+
+          <div class="cx-preview">
+            <div class="cx-preview-window">
+              <div class="cx-preview-topbar">
+                <div class="cx-preview-dots">
+                  <span class="cx-preview-dot"></span>
+                  <span class="cx-preview-dot"></span>
+                  <span class="cx-preview-dot"></span>
+                </div>
+                <div class="cx-preview-label">Operator snapshot</div>
+              </div>
+              <div class="cx-preview-body">
+                <div class="cx-preview-stat">
+                  <div class="cx-preview-stat-label">Why it matters</div>
+                  <div class="cx-preview-stat-value">Accessibility → CX → Revenue</div>
+                  <div class="cx-preview-stat-sub">A simplified menu experience can improve confidence, reduce friction, and influence conversion behavior in the moment.</div>
+                </div>
+
+                <div class="cx-preview-flow">
+                  <div class="cx-preview-flow-step">
+                    <div class="cx-preview-flow-icon">👁️</div>
+                    <div class="cx-preview-flow-copy">
+                      <div class="cx-preview-flow-title">Detect friction</div>
+                      <div class="cx-preview-flow-sub">Hard-to-read menu language creates effort and hesitation.</div>
+                    </div>
+                  </div>
+                  <div class="cx-preview-flow-step">
+                    <div class="cx-preview-flow-icon">✨</div>
+                    <div class="cx-preview-flow-copy">
+                      <div class="cx-preview-flow-title">Simplify in real time</div>
+                      <div class="cx-preview-flow-sub">AI rewrites menu content into clearer, more accessible language.</div>
+                    </div>
+                  </div>
+                  <div class="cx-preview-flow-step">
+                    <div class="cx-preview-flow-icon">📈</div>
+                    <div class="cx-preview-flow-copy">
+                      <div class="cx-preview-flow-title">Measure business impact</div>
+                      <div class="cx-preview-flow-sub">Track effects on spend, satisfaction, and return intent.</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="cx-preview-stat">
+                  <div class="cx-preview-stat-label">Portfolio positioning</div>
+                  <div class="cx-preview-stat-value">Inclusive design with measurable ROI</div>
+                  <div class="cx-preview-stat-sub">Blends accessibility, journey analytics, and operator decision support in one AI workflow demo.</div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
