@@ -771,6 +771,88 @@
     margin-top: 5px;
   }
 
+
+  /* ─── OPERATOR VALUE HERO ─── */
+  .value-hero {
+    background: linear-gradient(135deg, var(--teal) 0%, #1E6B5E 100%);
+    border-radius: 16px;
+    padding: 1.2rem 1.3rem;
+    color: white;
+    border: 1.5px solid rgba(255,255,255,0.08);
+    box-shadow: 0 8px 24px rgba(42,125,111,0.18);
+  }
+
+  .value-hero-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    opacity: 0.78; margin-bottom: 0.55rem;
+  }
+
+  .value-hero-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.18rem; font-weight: 700;
+    line-height: 1.25; margin-bottom: 0.55rem;
+  }
+
+  .value-hero-copy {
+    font-size: 0.82rem; line-height: 1.65;
+    color: rgba(255,255,255,0.92);
+  }
+
+  .value-hero-metrics {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-top: 0.95rem;
+  }
+
+  .value-pill {
+    padding: 5px 10px; border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(255,255,255,0.1);
+    font-size: 0.7rem; font-weight: 600;
+    color: white;
+  }
+
+  /* ─── SCAN MENU MODULE ─── */
+  .scan-panel {
+    background: var(--warm-white);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 1rem 1.1rem;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  }
+
+  .scan-panel-top {
+    display: flex; align-items: flex-start; justify-content: space-between;
+    gap: 0.8rem; margin-bottom: 0.75rem;
+  }
+
+  .scan-title {
+    font-weight: 700; font-size: 0.88rem; color: var(--ink);
+    margin-bottom: 3px;
+  }
+
+  .scan-copy {
+    font-size: 0.76rem; color: var(--ink-soft); line-height: 1.55;
+  }
+
+  .scan-actions {
+    display: flex; gap: 0.65rem; flex-wrap: wrap;
+    margin-top: 0.85rem;
+  }
+
+  .scan-status {
+    margin-top: 0.85rem;
+    padding: 0.75rem 0.9rem;
+    border-radius: 10px;
+    background: var(--cream);
+    border: 1px dashed var(--border);
+    font-size: 0.74rem; line-height: 1.55;
+    color: var(--ink-soft);
+  }
+
+  .scan-status strong { color: var(--ink); }
+
   /* ─── RESPONSIVE ─── */
   @media (max-width: 900px) {
     main { grid-template-columns: 1fr; }
@@ -1072,6 +1154,41 @@
 
     <!-- DEMO TAB -->
     <div id="tab-demo" class="tab-view active">
+
+
+      <div>
+        <div class="section-label">Why This Matters to Operators</div>
+        <div class="value-hero">
+          <div class="value-hero-eyebrow">Accessibility ROI</div>
+          <div class="value-hero-title">MenuLens helps operators reduce cognitive friction, increase ordering confidence, and measure the revenue impact of accessible design.</div>
+          <div class="value-hero-copy">Instead of treating accessibility as compliance alone, this workflow turns hard-to-read menus into a measurable CX lever across conversion, spend, satisfaction, and return intent.</div>
+          <div class="value-hero-metrics">
+            <span class="value-pill">+$12.40 avg spend</span>
+            <span class="value-pill">-41% read time</span>
+            <span class="value-pill">-38% abandonment</span>
+          </div>
+        </div>
+      </div>
+
+
+      <div>
+        <div class="section-label">Scan a Menu</div>
+        <div class="scan-panel">
+          <div class="scan-panel-top">
+            <div>
+              <div class="scan-title">Use your mobile camera to scan a physical menu</div>
+              <div class="scan-copy">On iPhone, this opens the rear camera so a diner can capture a menu page and send it into the MenuLens simplification workflow.</div>
+            </div>
+            <div class="badge" style="white-space:nowrap">Camera Ready</div>
+          </div>
+          <div class="scan-actions">
+            <button class="ctrl-btn primary" type="button" onclick="openCameraScanner()">📷 Scan Menu with Camera</button>
+            <button class="ctrl-btn" type="button" onclick="document.getElementById('menuFileInput').click()">🖼️ Upload Menu Photo</button>
+          </div>
+          <input id="menuFileInput" type="file" accept="image/*" capture="environment" onchange="handleMenuScan(event)" style="display:none">
+          <div class="scan-status" id="scanStatus"><strong>No menu scan yet.</strong> Capture a menu page to simulate OCR ingestion, then use Simplify &amp; Explain to show the AI output.</div>
+        </div>
+      </div>
 
       <!-- VENUE SWITCHER -->
       <div>
@@ -1959,9 +2076,37 @@ let wordTimer = null;
 let fontStep = 2;
 let gfMode = false;
 let contrastMode = false;
+let lastScannedFileName = '';
 
 const fontSteps = ['XS','S','M','L','XL'];
 const fontSizes = ['0.78rem','0.85rem','0.92rem','1.05rem','1.18rem'];
+
+
+function openCameraScanner() {
+  const input = document.getElementById('menuFileInput');
+  if (input) input.click();
+}
+
+function handleMenuScan(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+
+  lastScannedFileName = file.name;
+  const status = document.getElementById('scanStatus');
+  status.innerHTML = `<strong>Captured:</strong> ${file.name}<br>Menu image sent to OCR intake. In the live product, MenuLens would extract the text, detect jargon, and route the item into Claude for simplification.`;
+
+  const venueBtns = document.querySelectorAll('.venue-btn');
+  venueBtns.forEach(b => b.classList.remove('active'));
+
+  document.querySelector('.restaurant-name').textContent = 'Scanned Menu Upload';
+  document.querySelector('.menu-category').textContent = 'Camera Capture · OCR Intake Pending';
+  document.getElementById('itemName').textContent = 'Scanned menu page ready';
+  document.getElementById('itemPrice').textContent = '';
+  document.getElementById('itemDesc').textContent = 'Image captured from a mobile device. The production workflow would run OCR, segment menu items, detect hard-to-read culinary terms, and generate a dyslexia-friendly version in seconds.';
+
+  document.getElementById('aiOutputTitle').textContent = 'Menu scan captured';
+  hideResult();
+}
 
 // ─── VENUE SWITCH ───
 function switchVenue(idx, btn) {
@@ -1971,6 +2116,8 @@ function switchVenue(idx, btn) {
   btn.classList.add('active');
   stopAudio();
   clearMood();
+  document.getElementById('scanStatus').innerHTML = '<strong>No menu scan yet.</strong> Capture a menu page to simulate OCR ingestion, then use Simplify &amp; Explain to show the AI output.';
+  document.getElementById('menuFileInput').value = '';
 
   const venue = venues[idx];
   const card = document.getElementById('venueIntelCard');
