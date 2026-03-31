@@ -1175,6 +1175,81 @@
   }
 
 
+  .cx-mini-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.7rem;
+  }
+
+  .cx-mini-card {
+    border-radius: 18px;
+    padding: 0.85rem;
+    border: 1px solid var(--border);
+    background: linear-gradient(180deg, #FFFDF9, #F7EFE1);
+  }
+
+  .cx-mini-card.after {
+    background: linear-gradient(180deg, #F4FCF9, #E5F7F1);
+    border-color: rgba(42,125,111,0.22);
+  }
+
+  .cx-mini-label {
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.55rem;
+  }
+
+  .cx-mini-card.after .cx-mini-label {
+    color: var(--teal);
+  }
+
+  .cx-mini-lines {
+    display: grid;
+    gap: 0.42rem;
+  }
+
+  .cx-mini-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.71rem;
+    color: var(--ink-mid);
+  }
+
+  .cx-mini-line strong {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .cx-mini-card.after .cx-mini-line strong {
+    color: var(--teal);
+  }
+
+  .cx-mini-chip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.22rem 0.45rem;
+    border-radius: 999px;
+    font-size: 0.62rem;
+    font-weight: 700;
+    background: rgba(232,101,74,0.12);
+    color: var(--coral);
+    border: 1px solid rgba(232,101,74,0.18);
+  }
+
+  .cx-mini-card.after .cx-mini-chip {
+    background: rgba(42,125,111,0.10);
+    color: var(--teal);
+    border-color: rgba(42,125,111,0.18);
+  }
+
+
+
 
 
   /* ─── RESPONSIVE ─── */
@@ -1537,9 +1612,9 @@
               </div>
               <div class="cx-preview-body">
                 <div class="cx-preview-stat">
-                  <div class="cx-preview-stat-label">Operator insight</div>
-                  <div class="cx-preview-stat-value">Friction is invisible — until you measure it</div>
-                  <div class="cx-preview-stat-sub">Most operators don’t see how menu complexity impacts behavior. MenuLens makes that friction visible and actionable.</div>
+                  <div class="cx-preview-stat-label">Why it matters</div>
+                  <div class="cx-preview-stat-value">Accessibility → CX → Revenue</div>
+                  <div class="cx-preview-stat-sub">A simplified menu experience can improve confidence, reduce friction, and influence conversion behavior in the moment.</div>
                 </div>
 
                 <div class="cx-preview-flow">
@@ -1567,9 +1642,25 @@
                 </div>
 
                 <div class="cx-preview-stat">
-                  <div class="cx-preview-stat-label">What this demonstrates</div>
-                  <div class="cx-preview-stat-value">AI embedded in the journey</div>
-                  <div class="cx-preview-stat-sub">Not a standalone tool — but a system that detects friction, adapts content, and measures outcomes in real time.</div>
+                  <div class="cx-preview-stat-label">Before / After</div>
+                  <div class="cx-mini-compare">
+                    <div class="cx-mini-card">
+                      <div class="cx-mini-label">Before MenuLens</div>
+                      <div class="cx-mini-lines">
+                        <div class="cx-mini-line"><span>Read time</span><strong>High</strong></div>
+                        <div class="cx-mini-line"><span>Ordering confidence</span><span class="cx-mini-chip">Low</span></div>
+                        <div class="cx-mini-line"><span>Menu exploration</span><strong>Limited</strong></div>
+                      </div>
+                    </div>
+                    <div class="cx-mini-card after">
+                      <div class="cx-mini-label">With MenuLens</div>
+                      <div class="cx-mini-lines">
+                        <div class="cx-mini-line"><span>Read time</span><strong>-41%</strong></div>
+                        <div class="cx-mini-line"><span>Ordering confidence</span><span class="cx-mini-chip">Higher</span></div>
+                        <div class="cx-mini-line"><span>Spend signal</span><strong>+$12.40</strong></div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
