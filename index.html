@@ -853,10 +853,147 @@
 
   .scan-status strong { color: var(--ink); }
 
+
+  /* ─── CX PROBLEM HERO ─── */
+  .cx-hero {
+    background: linear-gradient(135deg, rgba(42,125,111,0.08) 0%, rgba(232,168,64,0.12) 100%);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    padding: 1.4rem;
+    box-shadow: 0 6px 24px rgba(26,18,8,0.06);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cx-hero::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    background: radial-gradient(circle, rgba(232,168,64,0.18) 0%, rgba(232,168,64,0) 70%);
+    pointer-events: none;
+  }
+
+  .cx-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 0.85rem;
+    padding: 5px 10px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.7);
+    border: 1px solid var(--border);
+    font-family: 'DM Mono', monospace;
+    font-size: 0.66rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    position: relative;
+    z-index: 1;
+  }
+
+  .cx-hero-title {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.45rem;
+    line-height: 1.15;
+    font-weight: 800;
+    color: var(--ink);
+    margin-bottom: 0.75rem;
+    max-width: 16ch;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cx-hero-copy {
+    font-size: 0.92rem;
+    line-height: 1.75;
+    color: var(--ink-mid);
+    position: relative;
+    z-index: 1;
+  }
+
+  .cx-hero-copy p + p { margin-top: 0.7rem; }
+
+  .cx-chain {
+    margin: 1rem 0 0.9rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cx-chain-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border-radius: 999px;
+    background: var(--warm-white);
+    border: 1px solid var(--border);
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: var(--ink-mid);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+  }
+
+  .cx-chain-arrow {
+    display: inline-flex;
+    align-items: center;
+    color: var(--ink-soft);
+    font-size: 0.85rem;
+    padding: 0 2px;
+  }
+
+  .cx-impact {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(122,98,64,0.18);
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.75rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cx-impact-card {
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(232,217,188,0.95);
+    border-radius: 14px;
+    padding: 0.85rem 0.8rem;
+  }
+
+  .cx-impact-label {
+    font-size: 0.64rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.35rem;
+  }
+
+  .cx-impact-value {
+    font-family: 'Bricolage Grotesque', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: var(--ink);
+    line-height: 1.1;
+  }
+
+  .cx-impact-sub {
+    margin-top: 0.22rem;
+    font-size: 0.68rem;
+    color: var(--ink-soft);
+  }
+
+
   /* ─── RESPONSIVE ─── */
   @media (max-width: 900px) {
     main { grid-template-columns: 1fr; }
     .right-panel { border-top: 1.5px solid var(--border); }
+    .cx-impact { grid-template-columns: 1fr; }
+    .cx-hero-title { max-width: none; }
   }
 
   /* ─── FADE IN ─── */
@@ -1154,6 +1291,42 @@
 
     <!-- DEMO TAB -->
     <div id="tab-demo" class="tab-view active">
+      <section class="cx-hero fade-in">
+        <div class="cx-hero-eyebrow">Experience Insight</div>
+        <h1 class="cx-hero-title">The CX Problem We’re Solving</h1>
+        <div class="cx-hero-copy">
+          <p>Dyslexia affects ~15–20% of the population, yet most restaurant menus are designed without cognitive accessibility in mind.</p>
+          <div class="cx-chain">
+            <span class="cx-chain-step">Cognitive overload</span>
+            <span class="cx-chain-arrow">→</span>
+            <span class="cx-chain-step">Anxiety</span>
+            <span class="cx-chain-arrow">→</span>
+            <span class="cx-chain-step">“Safe” ordering</span>
+            <span class="cx-chain-arrow">→</span>
+            <span class="cx-chain-step">Lower spend</span>
+            <span class="cx-chain-arrow">→</span>
+            <span class="cx-chain-step">Reduced satisfaction</span>
+          </div>
+          <p>MenuLens breaks this cycle by reducing cognitive friction in real time — transforming accessibility into a measurable driver of conversion, customer confidence, and revenue.</p>
+        </div>
+        <div class="cx-impact">
+          <div class="cx-impact-card">
+            <div class="cx-impact-label">User impact</div>
+            <div class="cx-impact-value">Higher confidence</div>
+            <div class="cx-impact-sub">Clearer decisions at the point of order</div>
+          </div>
+          <div class="cx-impact-card">
+            <div class="cx-impact-label">Business impact</div>
+            <div class="cx-impact-value">+$12.40</div>
+            <div class="cx-impact-sub">Modeled spend lift per visit</div>
+          </div>
+          <div class="cx-impact-card">
+            <div class="cx-impact-label">CX signal</div>
+            <div class="cx-impact-value">Closed loop</div>
+            <div class="cx-impact-sub">Accessibility tied directly to measurable outcomes</div>
+          </div>
+        </div>
+      </section>
 
 
       <div>
